@@ -22,10 +22,12 @@
 ### Initial Use Case: Retail Assistance
 
 - **Voice interaction**: Natural language product search and wayfinding
-- **Gesture control**: Physical pointing, waving, nodding
+- **Expressive movements**: Head nodding, body rotation, motorized antenna gestures
 - **Promotion awareness**: Active deal recommendations
 - **Fast responses**: <2s end-to-end, <100ms cache lookups
 - **Offline-capable**: Full functionality without backend (cache-only mode)
+
+> **Note**: Reachy Mini is a desktop robot with a 6-DoF head, rotating body, and LED antennas - **no arms or physical manipulation**. See [REACHY-MINI-HARDWARE.md](docs/REACHY-MINI-HARDWARE.md) for full capabilities.
 
 ---
 
@@ -127,7 +129,7 @@ reachy-mini-retail-assistant/
 │   ├── tools/                # Assistant tools
 │   │   ├── product_lookup.py # Product search by name/SKU
 │   │   ├── promo_manager.py  # Active promotions
-│   │   ├── movement.py       # Gesture control
+│   │   ├── movement.py       # Head/body orientation, antenna control
 │   │   └── selfie.py         # Optional engagement
 │   ├── pi_client/            # π backend integration
 │   │   └── event_emitter.py  # Async event emission

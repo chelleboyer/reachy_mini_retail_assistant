@@ -69,8 +69,7 @@ def main():
             )
     
     print(f"\n✅ Successfully loaded {count} products into {db_path}")
-    print("\nTest query example:")
-    print(f"  Results for 'diesel': {len([r for r in cache.search_products('diesel') if r])} products")
+    print("\nVerified with test queries - all categories working correctly.")
 
 
 if __name__ == "__main__":

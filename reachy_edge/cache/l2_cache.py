@@ -21,6 +21,11 @@ class ProductCache:
     Implements L2 cache tier for persistent product storage with fast full-text
     search capabilities. Uses FTS5 virtual tables with BM25 ranking for relevance.
     
+    Thread Safety:
+        NOT thread-safe. SQLite connections are not thread-safe by default.
+        For multi-threaded use (e.g., FastAPI with workers), create one
+        ProductCache instance per thread/request.
+    
     Attributes:
         db_path: Path to SQLite database file
         _conn: Database connection (lazy-initialized)
@@ -92,45 +97,69 @@ class ProductCache:
         
         Args:
             product: Product model to insert
+        
+        Raises:
+            sqlite3.IntegrityError: If database operation fails
+        
+        Note:
+            Does not check for duplicate SKUs. FTS5 virtual tables do not
+            support PRIMARY KEY constraints. Consider checking manually if needed.
         """
         conn = self._get_connection()
         
-        conn.execute("""
-            INSERT INTO products_fts (sku, name, category, location, price, description)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (
-            product.sku,
-            product.name,
-            product.category,
-            product.location,
-            product.price,
-            product.description
-        ))
-        
-        conn.commit()
-        logger.debug("product_inserted", sku=product.sku, name=product.name)
+        try:
+            conn.execute("""
+                INSERT INTO products_fts (sku, name, category, location, price, description)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                product.sku,
+                product.name,
+                product.category,
+                product.location,
+                product.price,
+                product.description
+            ))
+            
+            conn.commit()
+            logger.debug("product_inserted", sku=product.sku, name=product.name)
+        except Exception as e:
+            conn.rollback()
+            logger.error("product_insert_failed", sku=product.sku, error=str(e))
+            raise
     
     def insert_products(self, products: List[Product]) -> None:
         """Bulk insert multiple products into the cache.
         
         Args:
             products: List of Product models to insert
+        
+        Raises:
+            sqlite3.IntegrityError: If database operation fails
+        
+        Note:
+            Transaction is atomic - either all products are inserted or none.
+            Rolls back on any error to maintain database consistency.
         """
         conn = self._get_connection()
         
-        # Batch insert for better performance
-        data = [
-            (p.sku, p.name, p.category, p.location, p.price, p.description)
-            for p in products
-        ]
-        
-        conn.executemany("""
-            INSERT INTO products_fts (sku, name, category, location, price, description)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, data)
-        
-        conn.commit()
-        logger.info("products_bulk_inserted", count=len(products))
+        try:
+            # Batch insert for better performance
+            data = [
+                (p.sku, p.name, p.category, p.location, p.price, p.description)
+                for p in products
+            ]
+            
+            conn.executemany("""
+                INSERT INTO products_fts (sku, name, category, location, price, description)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, data)
+            
+            conn.commit()
+            logger.info("products_bulk_inserted", count=len(products))
+        except Exception as e:
+            conn.rollback()
+            logger.error("products_bulk_insert_failed", error=str(e), count=len(products))
+            raise
     
     def search_products(self, query: str, max_results: int = 5) -> List[Product]:
         """Search products using FTS5 full-text search with BM25 ranking.

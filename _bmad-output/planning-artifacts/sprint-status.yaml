@@ -45,8 +45,8 @@ development_status:
   # Epic 1: Core Edge Engine - Minimal Viable Edge
   epic-1: in-progress
   1-1-fastapi-project-setup-with-basic-health-endpoint: done
-  1-2-l2-cache-sqlite-fts5-product-storage: backlog
-  1-3-product-lookup-tool-with-fts5-search: backlog
+  1-2-l2-cache-sqlite-fts5-product-storage: done
+  1-3-product-lookup-tool-with-fts5-search: ready-for-dev
   1-4-l1-cache-in-memory-lru-for-hot-products: backlog
   1-5-interact-endpoint-for-product-queries: backlog
   1-6-enhanced-health-endpoint-with-cache-stats: backlog

@@ -98,13 +98,144 @@ Run specific test file:
 
 ```bash
 python -m pytest tests/test_main.py -v
+python -m pytest tests/test_l2_cache.py -v
 ```
 
 **Current Test Coverage:**
 - ✅ Health endpoint (200 status, correct schema, ISO 8601 timestamp, version)
 - ✅ FastAPI application startup
-- 🚧 Cache layer tests (in progress)
+- ✅ L2 cache (SQLite FTS5 product search) - 97% coverage, 17/17 tests passing
 - 🚧 LLM integration tests (in progress)
+
+---
+
+## 💾 L2 Cache - Product Storage & Search
+
+### Overview
+
+The L2 cache uses **SQLite FTS5** (Full-Text Search 5) for fast, persistent product storage with relevance ranking.
+
+**Features:**
+- **Full-text search** across SKU, name, category, location, and description
+- **BM25 ranking** for relevance-scored results
+- **Porter stemming** for better search quality (e.g., "truck" matches "trucker")
+- **Fast performance**: <100ms search latency (NFR4)
+- **Truck stop products**: 44 realistic products across 8 categories
+
+### Database Schema
+
+```sql
+CREATE VIRTUAL TABLE products_fts USING fts5(
+    sku,              -- Product SKU (searchable)
+    name,             -- Product name (searchable)
+    category,         -- Product category (searchable)
+    location,         -- Store location (searchable)
+    price UNINDEXED,  -- Price in USD (not searchable)
+    description,      -- Full description (searchable)
+    tokenize='porter unicode61'  -- Stemming & Unicode support
+);
+```
+
+### Product Categories
+
+- **Fuel & Fluids**: Diesel, DEF, motor oil, coolant, windshield washer
+- **Trucker Supplies**: Logbooks, straps, bungee cords, mud flaps, chains
+- **Electronics**: CB radios, GPS units, dash cams, phone chargers, headsets
+- **Energy & Snacks**: Coffee, energy drinks, beef jerky, trail mix, protein bars
+- **Hot Food**: Pizza, burgers, chicken tenders, breakfast sandwiches
+- **Services**: Showers, laundry, truck wash, reserved parking
+- **Safety & Lighting**: LED flares, safety vests, flashlights, emergency kits
+- **Convenience**: Sunglasses, hygiene products, OTC meds, oral care
+
+### Loading Sample Data
+
+```bash
+cd reachy_edge
+python scripts/load_products.py
+
+# Or specify custom database path
+python scripts/load_products.py --db-path ./custom/path/products.db
+```
+
+Expected output:
+```
+✅ Successfully loaded 44 products into ./data/cache.db
+
+Test query example:
+  Results for 'diesel': 5 products
+```
+
+### FTS5 Query Examples
+
+```python
+from cache.l2_cache import ProductCache
+
+cache = ProductCache()
+cache.initialize()
+
+# Single-word search
+results = cache.search_products("diesel", max_results=5)
+# Returns: Premium Diesel Fuel, BlueDEF, Shell Rotella Oil, etc.
+
+# Multi-word search (AND query)
+results = cache.search_products("CB radio")
+# Returns: Cobra 29 LX CB Radio
+
+# Category search
+results = cache.search_products("electronics")
+# Returns: CB radios, GPS units, dash cams, chargers, headsets
+
+# Service search
+results = cache.search_products("shower")
+# Returns: Shower Credit - 30 Minutes
+
+# Description keyword search
+results = cache.search_products("DOT compliant")
+# Returns: Simplified Logbook for Truck Drivers
+
+# Phrase search (exact match)
+results = cache.search_products('"truck stop"')
+# Returns: Products with exact phrase "truck stop"
+```
+
+### Python API
+
+```python
+from cache.l2_cache import ProductCache
+from models import Product
+
+# Initialize cache
+cache = ProductCache(db_path="./data/cache.db")
+cache.initialize()
+
+# Insert single product
+product = Product(
+    sku="FUEL-DIESEL-001",
+    name="Premium Diesel Fuel",
+    category="Fuel & Fluids",
+    location="Fuel Island 1",
+    price=3.89,
+    description="Ultra-low sulfur diesel"
+)
+cache.insert_product(product)
+
+# Bulk insert
+products = [product1, product2, product3]
+cache.insert_products(products)
+
+# Search with relevance scores
+results = cache.search_products("diesel fuel", max_results=5)
+for result in results:
+    print(f"{result.name} - ${result.price} - Score: {result.relevance_score}")
+
+# Close connection when done
+cache.close()
+
+# Or use context manager (auto-close)
+with ProductCache() as cache:
+    cache.initialize()
+    results = cache.search_products("CB radio")
+```
 
 ---
 

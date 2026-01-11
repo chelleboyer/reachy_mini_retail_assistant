@@ -1,203 +1,218 @@
-"""L2 persistent cache using SQLite with FTS5."""
+"""L2 Cache - SQLite FTS5 Product Storage.
+
+Provides persistent product storage with full-text search capabilities using SQLite's
+FTS5 extension and BM25 ranking algorithm for relevance scoring.
+
+Performance target: <100ms search latency (NFR4)
+"""
 import sqlite3
-import json
-from typing import List, Optional, Dict, Any
 from pathlib import Path
-import logging
-from datetime import datetime
+from typing import List, Optional
+import structlog
 
-from cache.schemas import Product, Promo
+from models import Product
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
-class L2Cache:
-    """SQLite-based persistent cache with full-text search."""
+class ProductCache:
+    """SQLite FTS5-based product cache with full-text search.
     
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-        self._ensure_db_exists()
-        self._init_schema()
-        self._version = self._load_version()
+    Implements L2 cache tier for persistent product storage with fast full-text
+    search capabilities. Uses FTS5 virtual tables with BM25 ranking for relevance.
     
-    def _ensure_db_exists(self) -> None:
-        """Ensure database file and directory exist."""
-        Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+    Attributes:
+        db_path: Path to SQLite database file
+        _conn: Database connection (lazy-initialized)
+    """
+    
+    def __init__(self, db_path: str = "data/products.db"):
+        """Initialize product cache.
+        
+        Args:
+            db_path: Path to SQLite database file (created if doesn't exist)
+        """
+        self.db_path = Path(db_path)
+        self._conn: Optional[sqlite3.Connection] = None
+        logger.info("product_cache_initialized", db_path=str(self.db_path))
     
     def _get_connection(self) -> sqlite3.Connection:
-        """Get database connection."""
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
-        return conn
+        """Get or create database connection.
+        
+        Returns:
+            Active SQLite connection
+        """
+        if self._conn is None:
+            # Ensure parent directory exists
+            self.db_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            self._conn = sqlite3.connect(str(self.db_path))
+            self._conn.row_factory = sqlite3.Row  # Enable column access by name
+            logger.debug("database_connection_created", db_path=str(self.db_path))
+        
+        return self._conn
     
-    def _init_schema(self) -> None:
-        """Initialize database schema with FTS5 for fast search."""
-        with self._get_connection() as conn:
-            # Products table
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS products (
-                    sku TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    aisle TEXT NOT NULL,
-                    category TEXT NOT NULL,
-                    price REAL,
-                    description TEXT,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # FTS5 virtual table for product search
-            conn.execute("""
-                CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(
-                    sku, name, category, description,
-                    content='products',
-                    content_rowid='rowid'
-                )
-            """)
-            
-            # Promos table
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS promos (
-                    id TEXT PRIMARY KEY,
-                    description TEXT NOT NULL,
-                    sku TEXT,
-                    category TEXT,
-                    discount_percent REAL,
-                    expiry TIMESTAMP,
-                    priority INTEGER DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            # Metadata table
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS metadata (
-                    key TEXT PRIMARY KEY,
-                    value TEXT NOT NULL,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            """)
-            
-            conn.commit()
+    def initialize(self) -> None:
+        """Initialize database schema with FTS5 virtual table.
+        
+        Creates the products_fts FTS5 virtual table if it doesn't exist.
+        Safe to call multiple times (idempotent).
+        
+        Schema:
+            - sku: Product SKU (searchable)
+            - name: Product name (searchable)
+            - category: Product category (searchable)
+            - location: Store location (searchable)
+            - price: Price in USD (UNINDEXED - not searchable)
+            - description: Full product description (searchable)
+        
+        Uses porter stemming and unicode61 tokenizer for better search quality.
+        """
+        conn = self._get_connection()
+        
+        # Create FTS5 virtual table with BM25 ranking
+        # UNINDEXED on price since we don't search by price
+        conn.execute("""
+            CREATE VIRTUAL TABLE IF NOT EXISTS products_fts USING fts5(
+                sku,
+                name,
+                category,
+                location,
+                price UNINDEXED,
+                description,
+                tokenize='porter unicode61'
+            )
+        """)
+        
+        conn.commit()
+        logger.info("database_initialized", table="products_fts", tokenizer="porter unicode61")
     
-    def _load_version(self) -> str:
-        """Load current cache version."""
-        with self._get_connection() as conn:
-            result = conn.execute(
-                "SELECT value FROM metadata WHERE key = 'version'"
-            ).fetchone()
-            return result["value"] if result else "0.0.0"
+    def insert_product(self, product: Product) -> None:
+        """Insert a single product into the cache.
+        
+        Args:
+            product: Product model to insert
+        """
+        conn = self._get_connection()
+        
+        conn.execute("""
+            INSERT INTO products_fts (sku, name, category, location, price, description)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+            product.sku,
+            product.name,
+            product.category,
+            product.location,
+            product.price,
+            product.description
+        ))
+        
+        conn.commit()
+        logger.debug("product_inserted", sku=product.sku, name=product.name)
     
-    async def search_product(self, query: str) -> Optional[Product]:
-        """Search for product using FTS5."""
-        with self._get_connection() as conn:
-            # Try FTS search first
-            result = conn.execute("""
-                SELECT p.* FROM products p
-                JOIN products_fts ON products_fts.rowid = p.rowid
+    def insert_products(self, products: List[Product]) -> None:
+        """Bulk insert multiple products into the cache.
+        
+        Args:
+            products: List of Product models to insert
+        """
+        conn = self._get_connection()
+        
+        # Batch insert for better performance
+        data = [
+            (p.sku, p.name, p.category, p.location, p.price, p.description)
+            for p in products
+        ]
+        
+        conn.executemany("""
+            INSERT INTO products_fts (sku, name, category, location, price, description)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, data)
+        
+        conn.commit()
+        logger.info("products_bulk_inserted", count=len(products))
+    
+    def search_products(self, query: str, max_results: int = 5) -> List[Product]:
+        """Search products using FTS5 full-text search with BM25 ranking.
+        
+        Searches across sku, name, category, location, and description fields.
+        Results are ranked by relevance using BM25 algorithm.
+        
+        Args:
+            query: Search query string (can be multi-word)
+            max_results: Maximum number of results to return (default: 5)
+        
+        Returns:
+            List of matching Product models, ordered by relevance (highest first)
+            Empty list if no matches or empty query
+        
+        Performance:
+            Target latency: <100ms for up to 50 products (NFR4)
+        """
+        # Handle empty query
+        if not query or not query.strip():
+            return []
+        
+        conn = self._get_connection()
+        
+        try:
+            # FTS5 search with BM25 ranking
+            # bm25() returns negative scores, lower (more negative) = more relevant
+            cursor = conn.execute("""
+                SELECT sku, name, category, location, price, description,
+                       bm25(products_fts) as relevance_score
+                FROM products_fts
                 WHERE products_fts MATCH ?
-                ORDER BY rank
-                LIMIT 1
-            """, (query,)).fetchone()
-            
-            if not result:
-                # Fallback to LIKE search
-                result = conn.execute("""
-                    SELECT * FROM products
-                    WHERE name LIKE ? OR category LIKE ? OR description LIKE ?
-                    LIMIT 1
-                """, (f"%{query}%", f"%{query}%", f"%{query}%")).fetchone()
-            
-            if result:
-                return Product(**dict(result))
-            return None
-    
-    async def get_active_promos(self, limit: int = 3) -> List[Promo]:
-        """Get active promotions sorted by priority."""
-        with self._get_connection() as conn:
-            results = conn.execute("""
-                SELECT * FROM promos
-                WHERE expiry IS NULL OR expiry > ?
-                ORDER BY priority DESC, created_at DESC
+                ORDER BY bm25(products_fts)
                 LIMIT ?
-            """, (datetime.utcnow(), limit)).fetchall()
+            """, (query, max_results))
             
-            return [Promo(**dict(row)) for row in results]
-    
-    async def update_products(self, products: List[Product]) -> None:
-        """Bulk update products."""
-        with self._get_connection() as conn:
-            for product in products:
-                conn.execute("""
-                    INSERT OR REPLACE INTO products (sku, name, aisle, category, price, description)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                """, (
-                    product.sku,
-                    product.name,
-                    product.aisle,
-                    product.category,
-                    product.price,
-                    product.description
-                ))
+            results = []
+            for row in cursor.fetchall():
+                # Convert BM25 score (negative) to positive relevance score
+                # More negative = more relevant, so negate and add offset
+                relevance = abs(float(row['relevance_score']))
+                
+                product = Product(
+                    sku=row['sku'],
+                    name=row['name'],
+                    category=row['category'],
+                    location=row['location'],
+                    price=float(row['price']),
+                    description=row['description'],
+                    relevance_score=relevance
+                )
+                results.append(product)
             
-            # Rebuild FTS index
-            conn.execute("INSERT INTO products_fts(products_fts) VALUES('rebuild')")
-            conn.commit()
+            logger.debug(
+                "search_completed",
+                query=query,
+                result_count=len(results),
+                max_results=max_results
+            )
             
-        logger.info(f"Updated {len(products)} products in L2 cache")
-    
-    async def update_promos(self, promos: List[Promo]) -> None:
-        """Bulk update promotions."""
-        with self._get_connection() as conn:
-            for promo in promos:
-                conn.execute("""
-                    INSERT OR REPLACE INTO promos (id, description, sku, category, discount_percent, expiry, priority)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    promo.id,
-                    promo.description,
-                    promo.sku,
-                    promo.category,
-                    promo.discount_percent,
-                    promo.expiry,
-                    promo.priority
-                ))
-            conn.commit()
+            return results
         
-        logger.info(f"Updated {len(promos)} promos in L2 cache")
+        except sqlite3.OperationalError as e:
+            # Handle FTS5 query syntax errors gracefully
+            logger.warning("search_failed", query=query, error=str(e))
+            return []
     
-    async def set_version(self, version: str) -> None:
-        """Update cache version."""
-        with self._get_connection() as conn:
-            conn.execute("""
-                INSERT OR REPLACE INTO metadata (key, value, updated_at)
-                VALUES ('version', ?, ?)
-            """, (version, datetime.utcnow()))
-            conn.commit()
+    def close(self) -> None:
+        """Close database connection.
         
-        self._version = version
+        Should be called when cache is no longer needed to release resources.
+        """
+        if self._conn:
+            self._conn.close()
+            self._conn = None
+            logger.debug("database_connection_closed", db_path=str(self.db_path))
     
-    def version(self) -> str:
-        """Get current cache version."""
-        return self._version
+    def __enter__(self):
+        """Context manager entry."""
+        return self
     
-    async def preload_hot_data(self, l1_cache: Any) -> None:
-        """Preload frequently accessed data into L1 cache."""
-        # Get top products by some heuristic (for now, just recent ones)
-        with self._get_connection() as conn:
-            results = conn.execute("""
-                SELECT * FROM products
-                ORDER BY created_at DESC
-                LIMIT 100
-            """).fetchall()
-            
-            for row in results:
-                product = Product(**dict(row))
-                # Cache by product name for quick lookup
-                l1_cache.set(f"product:{product.name.lower()}", product)
-        
-        # Preload active promos
-        promos = await self.get_active_promos(limit=10)
-        l1_cache.set("active_promos", promos)
-        
-        logger.info(f"Preloaded hot data into L1 cache")
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures connection is closed."""
+        self.close()
+

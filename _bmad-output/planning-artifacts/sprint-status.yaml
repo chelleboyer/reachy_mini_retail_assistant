@@ -1,0 +1,122 @@
+# Sprint Status - π Universal Second Brain
+
+# generated: 2026-01-10
+# project: reachy-mini-retail-assistant
+# project_key: reachy-mini-retail-assistant
+# tracking_system: bmm
+# story_location: _bmad-output/implementation-artifacts/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-01-10
+project: reachy-mini-retail-assistant
+project_key: reachy-mini-retail-assistant
+tracking_system: bmm
+story_location: _bmad-output/implementation-artifacts/stories
+
+development_status:
+  # Epic 1: Core Edge Engine - Minimal Viable Edge
+  epic-1: in-progress
+  1-1-fastapi-project-setup-with-basic-health-endpoint: done
+  1-2-l2-cache-sqlite-fts5-product-storage: backlog
+  1-3-product-lookup-tool-with-fts5-search: backlog
+  1-4-l1-cache-in-memory-lru-for-hot-products: backlog
+  1-5-interact-endpoint-for-product-queries: backlog
+  1-6-enhanced-health-endpoint-with-cache-stats: backlog
+  epic-1-retrospective: optional
+  
+  # Epic 2: Human Interface Layer - Voice + Personality
+  epic-2: backlog
+  2-1-voice-input-integration-stt: backlog
+  2-2-voice-output-integration-tts: backlog
+  2-3-gesture-control-system: backlog
+  2-4-llm-integration-with-cache-only-prompts: backlog
+  2-5-promo-manager-tool: backlog
+  2-6-interaction-state-machine-core-flows: backlog
+  2-7-deal-promotion-flow: backlog
+  2-8-wayfinding-flow-with-gestures: backlog
+  2-9-selfie-flow-optional-engagement: backlog
+  epic-2-retrospective: optional
+  
+  # Epic 3: π Intelligence Layer - Classification + Memory
+  epic-3: backlog
+  3-1-fastapi-backend-for-pi-service: backlog
+  3-2-domain-plugin-system-with-yaml-configuration: backlog
+  3-3-multi-stage-classification-pipeline-stages-1-3: backlog
+  3-4-multi-stage-classification-pipeline-stages-4-5: backlog
+  3-5-universal-canonical-storage-events-entities: backlog
+  3-6-knowledge-graph-with-relationships: backlog
+  3-7-context-and-reasoning-engine: backlog
+  3-8-event-ingestion-api-from-edge-devices: backlog
+  3-9-external-data-feed-ingestion: backlog
+  3-10-evaluation-and-replay-system: backlog
+  epic-3-retrospective: optional
+  
+  # Epic 4: Edge-π Sync - Distributed Architecture
+  epic-4: backlog
+  4-1-cache-generation-engine: backlog
+  4-2-incremental-cache-sync-protocol: backlog
+  4-3-multi-tenant-architecture: backlog
+  4-4-event-emission-from-edge-async-batching: backlog
+  epic-4-retrospective: optional
+  
+  # Epic 5: Production Readiness - Quality & Observability
+  epic-5: backlog
+  5-1-comprehensive-unit-testing-80-coverage: backlog
+  5-2-integration-testing-api-database: backlog
+  5-3-structured-logging-with-trace-ids: backlog
+  5-4-metrics-collection-and-monitoring: backlog
+  5-5-performance-profiling-and-optimization: backlog
+  5-6-security-hardening: backlog
+  5-7-error-handling-and-resilience: backlog
+  5-8-ci-cd-pipeline-with-quality-gates: backlog
+  5-9-documentation-and-code-quality-standards: backlog
+  5-10-deployment-and-scalability-testing: backlog
+  epic-5-retrospective: optional
+
+# Sprint Metrics
+total_epics: 5
+total_stories: 39
+epics_in_progress: 1
+stories_ready: 1
+stories_completed: 0
+current_sprint: 1
+
+# Sprint 0 Recommendations (from test-design-system.md)
+sprint_0_goals:
+  - Set up test infrastructure (pytest, coverage reporting)
+  - Configure structured logging (trace IDs, JSON format)
+  - Set up CI/CD pipeline with quality gates
+  - Configure metrics collection (Prometheus)
+  - Create project scaffolding (edge + π backends)
+  
+# Next Action
+next_story: 1-1-fastapi-project-setup-with-basic-health-endpoint
+recommended_by: implementation-readiness-report (Grade A+, PROCEED)

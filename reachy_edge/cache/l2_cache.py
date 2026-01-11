@@ -6,6 +6,7 @@ FTS5 extension and BM25 ranking algorithm for relevance scoring.
 Performance target: <100ms search latency (NFR4)
 """
 import sqlite3
+import threading
 from pathlib import Path
 from typing import List, Optional
 import structlog
@@ -243,5 +244,86 @@ class ProductCache:
     
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Context manager exit - ensures connection is closed."""
+        self.close()
+
+
+class ThreadSafeProductCache:
+    """Thread-safe wrapper for ProductCache using thread-local storage.
+    
+    Creates one ProductCache instance per thread, ensuring SQLite connection
+    safety in multi-threaded environments (e.g., FastAPI with multiple workers).
+    
+    Usage:
+        # Create shared cache instance
+        cache = ThreadSafeProductCache("data/cache.db")
+        
+        # Each thread gets its own connection automatically
+        cache.initialize()
+        results = cache.search_products("diesel")
+    
+    Note:
+        For FastAPI applications, prefer using dependency injection with
+        request-scoped ProductCache instances instead of this wrapper.
+    """
+    
+    def __init__(self, db_path: str = "data/products.db"):
+        """Initialize thread-safe cache wrapper.
+        
+        Args:
+            db_path: Path to SQLite database file (shared across threads)
+        """
+        self.db_path = db_path
+        self._local = threading.local()
+        logger.info("thread_safe_cache_initialized", db_path=self.db_path)
+    
+    def _get_cache(self) -> ProductCache:
+        """Get or create ProductCache for current thread.
+        
+        Returns:
+            ProductCache instance for current thread
+        """
+        if not hasattr(self._local, 'cache'):
+            self._local.cache = ProductCache(self.db_path)
+            logger.debug("thread_local_cache_created", thread_id=threading.get_ident())
+        return self._local.cache
+    
+    def initialize(self) -> None:
+        """Initialize database schema (thread-safe)."""
+        self._get_cache().initialize()
+    
+    def insert_product(self, product: Product) -> None:
+        """Insert single product (thread-safe)."""
+        self._get_cache().insert_product(product)
+    
+    def insert_products(self, products: List[Product]) -> None:
+        """Bulk insert products (thread-safe)."""
+        self._get_cache().insert_products(products)
+    
+    def search_products(self, query: str, max_results: int = 5) -> List[Product]:
+        """Search products (thread-safe)."""
+        return self._get_cache().search_products(query, max_results)
+    
+    def close(self) -> None:
+        """Close current thread's connection."""
+        if hasattr(self._local, 'cache'):
+            self._local.cache.close()
+            delattr(self._local, 'cache')
+    
+    def close_all(self) -> None:
+        """Close all thread-local connections.
+        
+        Note: Only closes the current thread's connection since we can't
+        access other threads' local storage. Each thread should call close()
+        when done.
+        """
+        self.close()
+        logger.info("thread_safe_cache_closed", db_path=self.db_path)
+    
+    def __enter__(self):
+        """Context manager entry."""
+        return self
+    
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - closes current thread's connection."""
         self.close()
 

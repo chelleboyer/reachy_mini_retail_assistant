@@ -4,9 +4,11 @@ import sqlite3
 import tempfile
 from pathlib import Path
 from datetime import datetime
+import threading
+import time
 
 # Will fail until we create the l2_cache module
-from cache.l2_cache import ProductCache
+from cache.l2_cache import ProductCache, ThreadSafeProductCache
 from models import Product
 
 
@@ -289,3 +291,240 @@ class TestEdgeCases:
         # Should not raise exception
         results = cache.search_products("test@#$%")
         assert isinstance(results, list)
+
+
+class TestDuplicateHandling:
+    """Test duplicate SKU behavior."""
+    
+    @pytest.fixture
+    def cache(self):
+        """Create temporary cache for testing."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            cache_instance = ProductCache(str(db_path))
+            cache_instance.initialize()
+            yield cache_instance
+            cache_instance.close()
+    
+    def test_duplicate_sku_insertion(self, cache):
+        """Test that duplicate SKUs are allowed (FTS5 limitation)."""
+        product1 = Product(
+            sku="FUEL-DEF-001",
+            name="BlueDEF Diesel Exhaust Fluid",
+            category="Fuel & Fluids",
+            location="Fuel Island 2",
+            price=12.99,
+            description="Premium DEF fluid"
+        )
+        product2 = Product(
+            sku="FUEL-DEF-001",  # Same SKU
+            name="Different Product",
+            category="Different Category",
+            location="Different Location",
+            price=99.99,
+            description="Different description"
+        )
+        
+        # Both should insert successfully (FTS5 has no PRIMARY KEY constraint)
+        cache.insert_product(product1)
+        cache.insert_product(product2)
+        
+        # Search should return both (use quoted string for hyphenated SKU)
+        results = cache.search_products('"FUEL-DEF-001"')
+        assert len(results) == 2, "FTS5 allows duplicate SKUs"
+
+
+class TestTransactionRollback:
+    """Test transaction rollback on errors."""
+    
+    @pytest.fixture
+    def cache(self):
+        """Create temporary cache for testing."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            cache_instance = ProductCache(str(db_path))
+            cache_instance.initialize()
+            yield cache_instance
+            cache_instance.close()
+    
+    def test_insert_rollback_on_error(self, cache):
+        """Test that failed insert rolls back transaction."""
+        # Insert a valid product first
+        valid_product = Product(
+            sku="VALID-001",
+            name="Valid Product",
+            category="Test",
+            location="Test Location",
+            price=10.0,
+            description="Valid product"
+        )
+        cache.insert_product(valid_product)
+        
+        # Corrupt the connection to force an error
+        # Close and set to invalid object to trigger exception
+        original_conn = cache._conn
+        cache._conn = "not a connection"  # This will cause execute() to fail
+        
+        invalid_product = Product(
+            sku="INVALID-001",
+            name="Invalid Product",
+            category="Test",
+            location="Test Location",
+            price=20.0,
+            description="Should fail"
+        )
+        
+        # This should raise an AttributeError
+        with pytest.raises(AttributeError):
+            cache.insert_product(invalid_product)
+        
+        # Restore connection and verify only valid product exists
+        cache._conn = original_conn
+        results = cache.search_products('"VALID-001"')
+        assert len(results) == 1
+        results = cache.search_products('"INVALID-001"')
+        assert len(results) == 0
+
+
+class TestContextManager:
+    """Test context manager lifecycle."""
+    
+    def test_context_manager_opens_and_closes(self):
+        """Test that context manager properly initializes and closes connection."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            
+            with ProductCache(str(db_path)) as cache:
+                cache.initialize()
+                
+                # Insert a product
+                product = Product(
+                    sku="CTX-001",
+                    name="Context Test Product",
+                    category="Test",
+                    location="Test Location",
+                    price=15.0,
+                    description="Testing context manager"
+                )
+                cache.insert_product(product)
+                
+                # Verify it was inserted (use quoted string for hyphenated SKU)
+                results = cache.search_products('"CTX-001"')
+                assert len(results) == 1
+                assert cache._conn is not None, "Connection should be active"
+            
+            # After context exit, connection should be closed
+            assert cache._conn is None, "Connection should be closed after context exit"
+    
+    def test_context_manager_closes_on_exception(self):
+        """Test that context manager closes connection even on exception."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            
+            try:
+                with ProductCache(str(db_path)) as cache:
+                    cache.initialize()
+                    # Raise an exception
+                    raise ValueError("Test exception")
+            except ValueError:
+                pass  # Expected
+            
+            # Connection should still be closed
+            assert cache._conn is None, "Connection should be closed even after exception"
+
+
+class TestThreadSafety:
+    """Test thread-safe cache wrapper."""
+    
+    def test_thread_local_connections(self):
+        """Test that each thread gets its own connection."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            cache = ThreadSafeProductCache(str(db_path))
+            cache.initialize()
+            
+            # Track thread IDs that successfully inserted
+            results = []
+            
+            def insert_in_thread(thread_id: int):
+                """Insert product from separate thread."""
+                product = Product(
+                    sku=f"THREAD-{thread_id:03d}",
+                    name=f"Thread {thread_id} Product",
+                    category="Test",
+                    location="Test Location",
+                    price=float(thread_id),
+                    description=f"Product from thread {thread_id}"
+                )
+                cache.insert_product(product)
+                results.append(thread_id)
+                # Close this thread's connection
+                cache.close()
+            
+            # Create multiple threads
+            threads = []
+            for i in range(5):
+                t = threading.Thread(target=insert_in_thread, args=(i,))
+                threads.append(t)
+                t.start()
+            
+            # Wait for all threads to complete
+            for t in threads:
+                t.join()
+            
+            # Verify all threads succeeded
+            assert len(results) == 5, "All threads should complete successfully"
+            
+            # Verify all products were inserted
+            all_results = cache.search_products("Thread")
+            assert len(all_results) >= 5, f"Should have at least 5 products, got {len(all_results)}"
+            
+            cache.close_all()
+    
+    def test_concurrent_searches(self):
+        """Test concurrent searches from multiple threads."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test_products.db"
+            cache = ThreadSafeProductCache(str(db_path))
+            cache.initialize()
+            
+            # Insert test products
+            products = [
+                Product(
+                    sku=f"SEARCH-{i:03d}",
+                    name=f"Search Product {i}",
+                    category="Test",
+                    location="Test Location",
+                    price=float(i),
+                    description="Test product for concurrent search"
+                )
+                for i in range(10)
+            ]
+            cache.insert_products(products)
+            
+            # Track search results from each thread
+            search_results = []
+            
+            def search_in_thread():
+                """Search from separate thread."""
+                results = cache.search_products("Search Product")
+                search_results.append(len(results))
+                # Close this thread's connection
+                cache.close()
+            
+            # Create multiple threads doing searches
+            threads = []
+            for i in range(10):
+                t = threading.Thread(target=search_in_thread)
+                threads.append(t)
+                t.start()
+            
+            # Wait for all threads
+            for t in threads:
+                t.join()
+            
+            # All searches should return results
+            assert len(search_results) == 10, "All search threads should complete"
+            assert all(count > 0 for count in search_results), "All searches should find products"
+            
+            cache.close_all()

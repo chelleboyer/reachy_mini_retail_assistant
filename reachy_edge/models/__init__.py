@@ -50,7 +50,7 @@ class Product(BaseModel):
     location: str = Field(..., description="Store location")
     price: float = Field(..., ge=0, description="Price in USD")
     description: str = Field(..., description="Product description")
-    relevance_score: Optional[float] = Field(None, description="FTS5 search relevance score")
+    relevance_score: Optional[float] = Field(default=None, description="FTS5 search relevance score")
     
     model_config = {
         "json_schema_extra": {

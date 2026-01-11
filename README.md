@@ -201,12 +201,71 @@ results = cache.search_products('"truck stop"')
 ### Python API
 
 ```python
-from cache.l2_cache import ProductCache
+from cache.l2_cache import ProductCache, ThreadSafeProductCache
 from models import Product
 
 # Initialize cache
 cache = ProductCache(db_path="./data/cache.db")
 cache.initialize()
+
+# Insert single product
+product = Product(
+    sku="FUEL-DIESEL-001",
+    name="Premium Diesel Fuel",
+    category="Fuel & Fluids",
+    location="Fuel Island 1",
+    price=3.89,
+    description="Ultra-low sulfur diesel"
+)
+cache.insert_product(product)
+
+# Bulk insert
+products = [product1, product2, product3]
+cache.insert_products(products)
+
+# Search with relevance scores
+results = cache.search_products("diesel fuel", max_results=5)
+for result in results:
+    print(f"{result.name} - ${result.price} - Score: {result.relevance_score}")
+
+# Close connection when done
+cache.close()
+
+# Or use context manager (auto-close)
+with ProductCache() as cache:
+    cache.initialize()
+    results = cache.search_products("CB radio")
+```
+
+#### Thread-Safe Usage (Multi-threaded Apps)
+
+For multi-threaded applications like FastAPI with multiple workers:
+
+```python
+from cache.l2_cache import ThreadSafeProductCache
+
+# Shared cache instance across threads (each thread gets own connection)
+cache = ThreadSafeProductCache("./data/cache.db")
+cache.initialize()
+
+# Use from any thread - automatically creates thread-local connection
+results = cache.search_products("diesel")
+
+# Or use FastAPI dependency injection (recommended)
+from fastapi import Depends
+
+def get_cache():
+    """Provide request-scoped ProductCache."""
+    cache = ProductCache("./data/cache.db")
+    try:
+        yield cache
+    finally:
+        cache.close()
+
+@app.get("/products/search")
+async def search(query: str, cache: ProductCache = Depends(get_cache)):
+    return cache.search_products(query)
+```
 
 # Insert single product
 product = Product(

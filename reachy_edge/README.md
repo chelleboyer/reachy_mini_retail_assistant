@@ -41,8 +41,8 @@ This same architecture pattern applies to any domain:
 │  └────────────────────────────────────┘ │
 │                                          │
 │  ┌─────────────┬─────────────────────┐  │
-│  │ L1 Cache    │ L2 SQLite FTS5      │  │
-│  │ (RAM, hot)  │ (products, promos,  │  │
+│  │ L1 Cache    │ L2 Backend          │  │
+│  │ (RAM, hot)  │ (SQLite or Qdrant)  │  │
 │  │ ≤1MB        │  store map) ≤100MB  │  │
 │  └─────────────┴─────────────────────┘  │
 │                                          │
@@ -146,6 +146,18 @@ OPENAI_API_KEY=your_key_here
 PI_URL=https://pi.example.com
 PI_API_KEY=your_pi_key
 PI_ENABLED=false
+
+# Retrieval
+L2_BACKEND=sqlite
+QDRANT_URL=http://localhost:6333
+QDRANT_COLLECTION=reachy_products
+
+# Models
+INFERENCE_PROVIDER=openai
+INFERENCE_MODEL=gpt-4.1-mini
+EMBEDDING_PROVIDER=openai
+EMBEDDING_MODEL=text-embedding-3-small
+EMBEDDING_DIMENSIONS=1536
 
 # Performance
 MAX_RESPONSE_WORDS=35

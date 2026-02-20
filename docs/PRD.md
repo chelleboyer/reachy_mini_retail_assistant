@@ -304,11 +304,18 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 * Low-latency LLM calls for nuanced responses
 * Strict prompt contracts with π-provided cache
 * Bounded context and output
+* Inference model/provider must be fully configurable by environment or deployment profile
 * No memory writes from edge LLM
+
+**Model & Embedding Abstraction:**
+* Inference model selection must be configurable (provider + model ID) for all services
+* Embedding model selection must be configurable (provider + model ID + dimensions)
+* Runtime must support model upgrades/rollbacks without code changes
+* Prompt, inference model, and embedding model versions must be traceable in logs
 
 **Memory System:**
 * **L1 Working Memory** (RAM, hot, ≤1MB)
-* **L2 Cached Knowledge** (SQLite FTS5, ≤100MB)
+* **L2 Cached Knowledge** (SQLite FTS5 and/or vector index, ≤100MB edge target)
 * **L3 Canonical Memory** (π only, unlimited)
 
 **External Data Sources:**
@@ -340,6 +347,7 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 * Build knowledge graph with relationships
 * Entity resolution and deduplication
 * Temporal tracking (history, audit trail)
+* Pluggable storage backends for symbolic + vector retrieval (Qdrant supported)
 
 **Cache Generation:**
 * Generate domain-filtered cache snapshots for edge devices
@@ -444,7 +452,8 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 │  └────────┬───────────────────────────┘ │
 │           │                              │
 │  ┌────────▼───────────────────────────┐ │
-│  │  L2 Cache (SQLite FTS5, ≤100MB)   │ │
+│  │  L2 Cache (SQLite FTS5 / Qdrant,  │ │
+│  │  ≤100MB edge target)              │ │
 │  │  - All products + locations       │ │
 │  │  - All promos                     │ │
 │  │  - Store config                   │ │
@@ -561,6 +570,8 @@ Debug mode changes **visibility, not behavior**.
 * Must degrade gracefully
 * Must support offline cache usage
 * Must be auditable
+* All inference and embedding model selection must be externally configurable
+* Vector storage backend must be swappable (SQLite FTS5 baseline, Qdrant supported)
 
 ---
 
@@ -599,9 +610,10 @@ Debug mode changes **visibility, not behavior**.
 * Multi-domain demo UI
 
 **Upgrades:**
-* Advanced classifier (Llama 3.2 3B fine-tuned)
+* Advanced classifier with configurable provider/model routing
 * Improved cache generation
 * Multi-tenant support
+* Pluggable vector backend rollout (Qdrant for semantic retrieval)
 
 ### Phase 3: Advanced Intelligence 📋
 

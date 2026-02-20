@@ -132,9 +132,9 @@ NFR47: CI/CD pipeline with quality gates
 - **Technology Stack:**
   - π Backend: FastAPI for REST API
   - Edge Backend: FastAPI on Pi 5
-  - Storage: SQLite (edge/local), PostgreSQL (cloud/production)
-  - Cache: In-memory LRU (L1) + SQLite FTS5 (L2)
-  - LLM: OpenAI API (initial), Llama 3.2 3B (planned)
+  - Storage: SQLite (edge/local), PostgreSQL (cloud/production), Qdrant (vector storage)
+  - Cache: In-memory LRU (L1) + configurable L2 backend (SQLite FTS5 and/or Qdrant vector index)
+  - Models: Inference + embedding models must be configurable (provider + model IDs)
   - Demo UI: Gradio for Hugging Face Spaces
 
 - **Deployment Models:**
@@ -162,6 +162,11 @@ NFR47: CI/CD pipeline with quality gates
   - Classification confidence tracking
   - Prompt versioning
   - Debug mode (logs cache slices, LLM I/O, classifier decisions)
+
+- **Configurability Requirements:**
+  - All inference model selection is environment/config driven
+  - All embedding model selection is environment/config driven
+  - Vector database backend is swappable (SQLite FTS5 baseline, Qdrant supported)
 
 **From Current Implementation:**
 
@@ -860,7 +865,7 @@ System meets all performance, reliability, and quality standards with full obser
 **When** I create the LLM module  
 **Then** the following exists:
 - `reachy_edge/llm/client.py` with `LLMClient` class
-- Integration with OpenAI API (configurable model: gpt-4o-mini initially)
+- Integration with configurable LLM providers (OpenAI initially; model via config)
 - System prompt enforces cache-only responses
 - Max tokens: 150 (ensures ≤35 words per FR14)
 
@@ -900,13 +905,13 @@ System meets all performance, reliability, and quality standards with full obser
 - Unit tests with mocked OpenAI API
 
 **Definition of Done:**
-- [ ] LLMClient with OpenAI integration
+- [ ] LLMClient with provider-agnostic integration and config-driven model selection
 - [ ] Generates responses ≤35 words in <500ms
 - [ ] Strict cache-only system prompt
 - [ ] Fallback for API failures
 - [ ] Response caching
 - [ ] Unit tests ≥80% coverage
-- [ ] Integration test with real OpenAI API
+- [ ] Integration test with selected configured provider
 - [ ] Code meets quality standards (NFR33-NFR47)
 
 **FR Coverage:** FR14 (Natural language conversation), FR23 (Fast LLM with cache-only prompts)  
@@ -1464,7 +1469,7 @@ System meets all performance, reliability, and quality standards with full obser
 **When** I create the storage module  
 **Then** the following exists:
 - `pi_backend/db/canonical_store.py` with `CanonicalStore` class
-- SQLite tables: `events`, `entities`, `relationships`
+- Storage schema implemented with pluggable backend support (SQLite baseline, Qdrant for vectors)
 - Schema for events: `event_id, event_type, domain, timestamp, payload (JSON), confidence`
 - Schema for entities: `entity_id, entity_type, name, properties (JSON), created_at, updated_at`
 
@@ -1526,7 +1531,7 @@ System meets all performance, reliability, and quality standards with full obser
 **When** I create the graph module  
 **Then** the following exists:
 - `pi_backend/db/knowledge_graph.py` with `KnowledgeGraph` class
-- SQLite table: `relationships` (subject_id, predicate, object_id, weight, created_at)
+- Relationship storage for `relationships` (subject_id, predicate, object_id, weight, created_at) with backend abstraction
 - Relationship types: located_in, part_of, associated_with, related_to
 
 **Given** entities: Product("apples"), Location("Aisle 3")  
@@ -1854,7 +1859,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Then** it:
 1. Filters products by store_id (multi-tenant, FR12)
 2. Includes active promos for store
-3. Generates FTS5-optimized product data
+3. Generates backend-optimized product data (FTS5 and/or vector chunks)
 4. Creates L1 cache seed (top 100 hot products)
 5. Returns CacheSnapshot with metadata
 
@@ -1934,7 +1939,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** diff: 5 products updated, 2 promos added, 1 product deleted  
 **When** edge applies diff  
 **Then** edge:
-1. Updates L2 (SQLite) with changes
+1. Updates configured L2 backend (SQLite and/or Qdrant) with changes
 2. Invalidates L1 cache entries for updated items
 3. Updates cache version to new tag
 4. Logs sync completion

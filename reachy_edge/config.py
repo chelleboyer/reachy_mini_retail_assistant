@@ -21,6 +21,18 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.0
     llm_max_tokens: int = 100
     
+    # Model Configuration (fully configurable)
+    inference_provider: str = "openai"
+    inference_model: str = "gpt-4.1-mini"
+    embedding_provider: str = "openai"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dimensions: int = 1536
+
+    # Retrieval Backend Configuration
+    l2_backend: str = "sqlite"  # sqlite | qdrant
+    qdrant_url: str = "http://localhost:6333"
+    qdrant_collection: str = "reachy_products"
+
     # π (Second Brain) Integration
     pi_url: str = "https://pi.example.com"
     pi_api_key: str = "dev-key"

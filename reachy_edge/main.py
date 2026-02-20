@@ -8,18 +8,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import structlog
 
-from config import settings
-from cache import L1Cache, L2Cache, CacheSyncPayload
-from pi_client import EventEmitter
-from tools import (
+from .config import settings
+from .cache import L1Cache, L2Cache, CacheSyncPayload
+from .pi_client import EventEmitter
+from .tools import (
     ToolDependencies,
     ProductLookupTool,
     PromoManagerTool,
     SelfieTool,
     MovementTool
 )
-from llm import PromptManager, LLMInference
-from models import HealthResponse, InteractionRequest, InteractionResponse
+from .llm import PromptManager, LLMInference
+from .models import HealthResponse, InteractionRequest, InteractionResponse
 
 # Configure structured logging
 structlog.configure(
@@ -272,7 +272,7 @@ def _intent_to_tool(intent: str) -> str:
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(
-        "main:app",
+        "reachy_edge.main:app",
         host=settings.host,
         port=settings.port,
         reload=settings.debug

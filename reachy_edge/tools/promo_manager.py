@@ -3,9 +3,9 @@ import time
 import logging
 from typing import List
 
-from tools.base import Tool, ToolDependencies, ToolResult
-from models.events import Event, EventType
-from cache.schemas import Promo
+from .base import Tool, ToolDependencies, ToolResult
+from ..models.events import EventType
+from ..cache.schemas import Promo
 
 logger = logging.getLogger(__name__)
 

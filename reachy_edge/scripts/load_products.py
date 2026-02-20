@@ -14,8 +14,8 @@ from pathlib import Path
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from cache.l2_cache import ProductCache
-from data.sample_products import load_sample_data
+from reachy_edge.cache.l2_cache import ProductCache
+from reachy_edge.data.sample_products import load_sample_data
 import structlog
 
 logger = structlog.get_logger(__name__)

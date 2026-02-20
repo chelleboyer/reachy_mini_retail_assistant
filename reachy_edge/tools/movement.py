@@ -2,7 +2,7 @@
 import time
 import logging
 
-from tools.base import Tool, ToolDependencies, ToolResult
+from .base import Tool, ToolDependencies, ToolResult
 
 logger = logging.getLogger(__name__)
 

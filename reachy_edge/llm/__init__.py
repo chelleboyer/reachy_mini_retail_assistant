@@ -1,5 +1,6 @@
 """LLM integration layer."""
-from llm.prompt_manager import PromptManager
-from llm.inference import LLMInference
+from .prompt_manager import PromptManager
+from .inference import LLMInference
+from .client import LLMClient
 
-__all__ = ["PromptManager", "LLMInference"]
+__all__ = ["PromptManager", "LLMInference", "LLMClient"]

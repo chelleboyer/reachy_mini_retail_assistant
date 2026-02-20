@@ -1,10 +1,10 @@
 """Data models for Reachy Edge Backend."""
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict, Any
 
-from models.interaction import InteractionRequest, InteractionResponse
-from models.events import Event, EventType
+from .interaction import InteractionRequest, InteractionResponse
+from .events import Event, EventType
 
 
 class HealthResponse(BaseModel):
@@ -18,6 +18,7 @@ class HealthResponse(BaseModel):
     status: str
     timestamp: datetime
     version: str
+    details: Optional[Dict[str, Any]] = None
     
     model_config = {
         "json_schema_extra": {

@@ -17,3 +17,6 @@ openai>=1.12.0
 
 # Optional: Local LLM
 # llama-cpp-python>=0.2.0
+
+# Optional: Qdrant runtime adapter
+# qdrant-client>=1.10.0

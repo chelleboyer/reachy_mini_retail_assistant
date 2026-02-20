@@ -2,8 +2,8 @@
 import time
 import logging
 
-from tools.base import Tool, ToolDependencies, ToolResult
-from models.events import Event, EventType
+from .base import Tool, ToolDependencies, ToolResult
+from ..models.events import EventType
 
 logger = logging.getLogger(__name__)
 

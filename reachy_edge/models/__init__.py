@@ -3,8 +3,8 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional
 
-from models.interaction import InteractionRequest, InteractionResponse
-from models.events import Event, EventType
+from .interaction import InteractionRequest, InteractionResponse
+from .events import Event, EventType
 
 
 class HealthResponse(BaseModel):

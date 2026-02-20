@@ -48,8 +48,8 @@ development_status:
   1-2-l2-cache-sqlite-fts5-product-storage: done
   1-3-product-lookup-tool-with-fts5-search: in-progress
   1-4-l1-cache-in-memory-lru-for-hot-products: backlog
-  1-5-interact-endpoint-for-product-queries: backlog
-  1-6-enhanced-health-endpoint-with-cache-stats: backlog
+  1-5-interact-endpoint-for-product-queries: in-progress
+  1-6-enhanced-health-endpoint-with-cache-stats: in-progress
   epic-1-retrospective: optional
   
   # Epic 2: Human Interface Layer - Voice + Personality

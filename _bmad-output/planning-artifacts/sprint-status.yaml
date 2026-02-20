@@ -46,7 +46,7 @@ development_status:
   epic-1: in-progress
   1-1-fastapi-project-setup-with-basic-health-endpoint: done
   1-2-l2-cache-sqlite-fts5-product-storage: done
-  1-3-product-lookup-tool-with-fts5-search: done
+  1-3-product-lookup-tool-with-fts5-search: in-progress
   1-4-l1-cache-in-memory-lru-for-hot-products: backlog
   1-5-interact-endpoint-for-product-queries: in-progress
   1-6-enhanced-health-endpoint-with-cache-stats: in-progress
@@ -106,7 +106,7 @@ total_epics: 5
 total_stories: 39
 epics_in_progress: 1
 stories_ready: 1
-stories_completed: 3
+stories_completed: 2
 current_sprint: 1
 
 # Sprint 0 Recommendations (from test-design-system.md)
@@ -118,5 +118,5 @@ sprint_0_goals:
   - Create project scaffolding (edge + π backends)
   
 # Next Action
-next_story: 1-5-interact-endpoint-for-product-queries
+next_story: 1-3-product-lookup-tool-with-fts5-search
 recommended_by: start-now.md + implementation-readiness-report (Grade A+, PROCEED)

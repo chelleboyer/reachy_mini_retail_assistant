@@ -333,41 +333,63 @@ class ThreadSafeProductCache:
 class L2Cache:
     """Async-friendly cache facade used by FastAPI app and tools.
 
-    Backend can be configured for SQLite keyword retrieval or optional Qdrant
-    vector retrieval.
+    This wraps ProductCache (FTS5 search) and a lightweight promo/version store
+    to provide the methods used by the interaction layer.
     """
 
     def __init__(self, db_path: str = "./data/cache.db"):
-        from ..config import settings
-        from .vector_backends import SQLiteKeywordBackend, QdrantVectorBackend
-
         self.db_path = db_path
+        self._products = ThreadSafeProductCache(db_path)
+        self._products.initialize()
         self._promos: dict[str, Promo] = {}
         self._version: str = "v0"
 
-        backend = settings.l2_backend.lower().strip()
-        if backend == "qdrant":
-            self._backend = QdrantVectorBackend(
-                url=settings.qdrant_url,
-                collection=settings.qdrant_collection,
-                embedding_dim=settings.embedding_dimensions,
-            )
-            self._backend_name = "qdrant"
-        else:
-            self._backend = SQLiteKeywordBackend(db_path)
-            self._backend_name = "sqlite"
+    @staticmethod
+    def _to_search_product(product: CacheProduct) -> SearchProduct:
+        """Convert cache schema product to FTS search product model."""
+        location = product.aisle if product.aisle.lower().startswith("aisle") else f"Aisle {product.aisle}"
+        return SearchProduct(
+            sku=product.sku,
+            name=product.name,
+            category=product.category,
+            location=location,
+            price=product.price or 0.0,
+            description=product.description or "",
+        )
+
+    @staticmethod
+    def _extract_aisle(location: str) -> str:
+        """Extract aisle token from location string."""
+        lower = location.lower().strip()
+        if lower.startswith("aisle"):
+            parts = location.split(maxsplit=1)
+            return parts[1] if len(parts) > 1 else location
+        return location
+
+    @staticmethod
+    def _to_cache_product(product: SearchProduct) -> CacheProduct:
+        """Convert FTS search product model to cache schema product."""
+        return CacheProduct(
+            sku=product.sku,
+            name=product.name,
+            aisle=L2Cache._extract_aisle(product.location),
+            category=product.category,
+            price=product.price,
+            description=product.description,
+        )
 
     async def update_products(self, products: list[CacheProduct]) -> None:
         """Replace product cache with new set of products."""
-        self._backend.upsert_products(products)
+        self._products.initialize()
+        search_products = [self._to_search_product(p) for p in products]
+        self._products.insert_products(search_products)
 
     async def search_product(self, query: str) -> Optional[CacheProduct]:
         """Find the best matching product for a query."""
-        return self._backend.search_one(query)
-
-    async def search_products(self, query: str, max_results: int = 3) -> list[CacheProduct]:
-        """Find top matching products for a query."""
-        return self._backend.search_many(query, max_results=max_results)
+        results = self._products.search_products(query, max_results=1)
+        if not results:
+            return None
+        return self._to_cache_product(results[0])
 
     async def update_promos(self, promos: list[Promo]) -> None:
         """Upsert promotions in memory."""
@@ -391,10 +413,7 @@ class L2Cache:
 
     def stats(self) -> dict:
         """Expose cache stats for health checks."""
-        payload = {
+        return {
             "version": self._version,
             "promo_count": len(self._promos),
-            "backend": self._backend_name,
         }
-        payload.update(self._backend.stats())
-        return payload

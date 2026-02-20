@@ -12,13 +12,18 @@ import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .cache import CacheSyncPayload, L1Cache, L2Cache
 from .config import settings
-from .fsm import InteractionStateMachine
-from .llm import LLMInference, PromptManager
-from .models import HealthResponse, InteractionRequest, InteractionResponse
+from .cache import L1Cache, L2Cache, CacheSyncPayload
 from .pi_client import EventEmitter
-from .tools import MovementTool, ProductLookupTool, PromoManagerTool, SelfieTool, ToolDependencies
+from .tools import (
+    ToolDependencies,
+    ProductLookupTool,
+    PromoManagerTool,
+    SelfieTool,
+    MovementTool
+)
+from .llm import PromptManager, LLMInference
+from .models import HealthResponse, InteractionRequest, InteractionResponse
 
 structlog.configure(
     processors=[
@@ -241,5 +246,9 @@ def _intent_to_tool(intent: str) -> str:
 
 if __name__ == "__main__":
     import uvicorn
-
-    uvicorn.run("reachy_edge.main:app", host=settings.host, port=settings.port, reload=settings.debug)
+    uvicorn.run(
+        "reachy_edge.main:app",
+        host=settings.host,
+        port=settings.port,
+        reload=settings.debug
+    )

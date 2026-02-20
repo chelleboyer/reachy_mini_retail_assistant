@@ -11,27 +11,21 @@ from .schemas import Product as CacheProduct
 
 
 class ProductRetrievalBackend(ABC):
-    """Interface for retrieval backends."""
-
     @abstractmethod
     def upsert_products(self, products: list[CacheProduct]) -> None:
-        """Insert/update products in backend."""
+        pass
 
     @abstractmethod
     def search_one(self, query: str) -> Optional[CacheProduct]:
-        """Return best match for query."""
-
-    @abstractmethod
-    def search_many(self, query: str, max_results: int = 3) -> list[CacheProduct]:
-        """Return top matches for query."""
+        pass
 
     @abstractmethod
     def stats(self) -> dict:
-        """Return backend stats."""
+        pass
 
 
 class SQLiteKeywordBackend(ProductRetrievalBackend):
-    """SQLite FTS-backed backend with aisle/location mapping."""
+    """SQLite FTS-backed backend with light aisle schema mapping."""
 
     def __init__(self, db_path: str):
         self.db_path = Path(db_path)
@@ -78,7 +72,14 @@ class SQLiteKeywordBackend(ProductRetrievalBackend):
         conn = self._connect()
         conn.execute("DELETE FROM products_fts")
         rows = [
-            (p.sku, p.name, p.category, self._to_location(p.aisle), p.price, p.description or "")
+            (
+                p.sku,
+                p.name,
+                p.category,
+                self._to_location(p.aisle),
+                p.price,
+                p.description or "",
+            )
             for p in products
         ]
         conn.executemany(
@@ -90,47 +91,38 @@ class SQLiteKeywordBackend(ProductRetrievalBackend):
         )
         conn.commit()
 
-    def search_many(self, query: str, max_results: int = 3) -> list[CacheProduct]:
-        if not query.strip():
-            return []
-        conn = self._connect()
-        try:
-            cursor = conn.execute(
-                """
-                SELECT sku, name, category, location, price, description
-                FROM products_fts
-                WHERE products_fts MATCH ?
-                ORDER BY bm25(products_fts)
-                LIMIT ?
-                """,
-                (query, max_results),
-            )
-        except sqlite3.OperationalError:
-            return []
-
-        rows = cursor.fetchall()
-        return [
-            CacheProduct(
-                sku=row["sku"],
-                name=row["name"],
-                aisle=self._to_aisle(row["location"]),
-                category=row["category"],
-                price=row["price"],
-                description=row["description"],
-            )
-            for row in rows
-        ]
-
     def search_one(self, query: str) -> Optional[CacheProduct]:
-        results = self.search_many(query, max_results=1)
-        return results[0] if results else None
+        if not query.strip():
+            return None
+        conn = self._connect()
+        cursor = conn.execute(
+            """
+            SELECT sku, name, category, location, price, description
+            FROM products_fts
+            WHERE products_fts MATCH ?
+            ORDER BY bm25(products_fts)
+            LIMIT 1
+            """,
+            (query,),
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return CacheProduct(
+            sku=row["sku"],
+            name=row["name"],
+            aisle=self._to_aisle(row["location"]),
+            category=row["category"],
+            price=row["price"],
+            description=row["description"],
+        )
 
     def stats(self) -> dict:
         return {"backend": "sqlite"}
 
 
 class QdrantVectorBackend(ProductRetrievalBackend):
-    """Optional Qdrant backend with graceful lexical fallback."""
+    """Optional Qdrant-backed backend with graceful local fallback."""
 
     def __init__(self, url: str, collection: str, embedding_dim: int):
         self.url = url
@@ -162,7 +154,7 @@ class QdrantVectorBackend(ProductRetrievalBackend):
         if not self._client:
             return
         try:
-            from qdrant_client.models import Distance, VectorParams  # type: ignore
+            from qdrant_client.models import VectorParams, Distance  # type: ignore
 
             self._client.recreate_collection(
                 collection_name=self.collection,
@@ -203,49 +195,33 @@ class QdrantVectorBackend(ProductRetrievalBackend):
         except Exception:
             self._client = None
 
-    def _fallback_search_many(self, query: str, max_results: int = 3) -> list[CacheProduct]:
-        q = query.lower().strip()
-        ranked: list[tuple[int, CacheProduct]] = []
-        for p in self._products.values():
-            hay = f"{p.sku} {p.name} {p.category} {p.aisle} {p.description or ''}".lower()
-            score = 2 if q and q in hay else 0
-            if p.sku.lower() == q:
-                score += 10
-            if score > 0:
-                ranked.append((score, p))
-        ranked.sort(key=lambda x: x[0], reverse=True)
-        return [p for _, p in ranked[:max_results]]
-
-    def search_many(self, query: str, max_results: int = 3) -> list[CacheProduct]:
+    def search_one(self, query: str) -> Optional[CacheProduct]:
         if self._client:
             try:
                 hits = self._client.search(
                     collection_name=self.collection,
                     query_vector=self._embed(query, self.embedding_dim),
-                    limit=max_results,
+                    limit=1,
                 )
-                results: list[CacheProduct] = []
-                for hit in hits:
-                    payload = hit.payload
-                    results.append(
-                        CacheProduct(
-                            sku=str(payload.get("sku", "")),
-                            name=str(payload.get("name", "")),
-                            aisle=str(payload.get("aisle", "")),
-                            category=str(payload.get("category", "")),
-                            price=payload.get("price"),
-                            description=payload.get("description"),
-                        )
+                if hits:
+                    payload = hits[0].payload
+                    return CacheProduct(
+                        sku=str(payload.get("sku", "")),
+                        name=str(payload.get("name", "")),
+                        aisle=str(payload.get("aisle", "")),
+                        category=str(payload.get("category", "")),
+                        price=payload.get("price"),
+                        description=payload.get("description"),
                     )
-                if results:
-                    return results
             except Exception:
                 self._client = None
-        return self._fallback_search_many(query, max_results=max_results)
 
-    def search_one(self, query: str) -> Optional[CacheProduct]:
-        results = self.search_many(query, max_results=1)
-        return results[0] if results else None
+        q = query.lower().strip()
+        for p in self._products.values():
+            hay = f"{p.sku} {p.name} {p.category} {p.aisle} {p.description or ''}".lower()
+            if q in hay:
+                return p
+        return next(iter(self._products.values()), None)
 
     def stats(self) -> dict:
         return {

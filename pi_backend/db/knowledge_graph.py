@@ -7,7 +7,7 @@ class KnowledgeGraph:
     def __init__(self, db_path: str):
         db = Path(db_path)
         db.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(str(db), check_same_thread=False)
+        self.conn = sqlite3.connect(str(db))
         self.conn.execute(
             """
             CREATE TABLE IF NOT EXISTS relationships (

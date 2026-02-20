@@ -8,8 +8,8 @@ import threading
 import time
 
 # Will fail until we create the l2_cache module
-from cache.l2_cache import ProductCache, ThreadSafeProductCache
-from models import Product
+from reachy_edge.cache.l2_cache import ProductCache, ThreadSafeProductCache
+from reachy_edge.models import Product
 
 
 class TestProductCacheDatabaseInit:

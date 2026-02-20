@@ -11,7 +11,7 @@ Includes realistic products across key categories:
 - Convenience
 """
 from typing import List
-from models import Product
+from ..models import Product
 
 
 def get_sample_products() -> List[Product]:

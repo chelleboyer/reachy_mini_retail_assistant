@@ -6,8 +6,8 @@ from typing import Dict, Any, List
 from datetime import datetime
 import json
 
-from config import settings
-from models.events import Event, EventType
+from ..config import settings
+from ..models.events import EventType
 
 logger = logging.getLogger(__name__)
 

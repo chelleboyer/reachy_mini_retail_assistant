@@ -11,7 +11,8 @@ from pathlib import Path
 from typing import List, Optional
 import structlog
 
-from models import Product
+from ..models import Product as SearchProduct
+from .schemas import Product as CacheProduct, Promo
 
 logger = structlog.get_logger(__name__)
 
@@ -93,7 +94,7 @@ class ProductCache:
         conn.commit()
         logger.info("database_initialized", table="products_fts", tokenizer="porter unicode61")
     
-    def insert_product(self, product: Product) -> None:
+    def insert_product(self, product: SearchProduct) -> None:
         """Insert a single product into the cache.
         
         Args:
@@ -128,7 +129,7 @@ class ProductCache:
             logger.error("product_insert_failed", sku=product.sku, error=str(e))
             raise
     
-    def insert_products(self, products: List[Product]) -> None:
+    def insert_products(self, products: List[SearchProduct]) -> None:
         """Bulk insert multiple products into the cache.
         
         Args:
@@ -162,7 +163,7 @@ class ProductCache:
             logger.error("products_bulk_insert_failed", error=str(e), count=len(products))
             raise
     
-    def search_products(self, query: str, max_results: int = 5) -> List[Product]:
+    def search_products(self, query: str, max_results: int = 5) -> List[SearchProduct]:
         """Search products using FTS5 full-text search with BM25 ranking.
         
         Searches across sku, name, category, location, and description fields.
@@ -203,7 +204,7 @@ class ProductCache:
                 # More negative = more relevant, so negate and add offset
                 relevance = abs(float(row['relevance_score']))
                 
-                product = Product(
+                product = SearchProduct(
                     sku=row['sku'],
                     name=row['name'],
                     category=row['category'],
@@ -291,15 +292,15 @@ class ThreadSafeProductCache:
         """Initialize database schema (thread-safe)."""
         self._get_cache().initialize()
     
-    def insert_product(self, product: Product) -> None:
+    def insert_product(self, product: SearchProduct) -> None:
         """Insert single product (thread-safe)."""
         self._get_cache().insert_product(product)
     
-    def insert_products(self, products: List[Product]) -> None:
+    def insert_products(self, products: List[SearchProduct]) -> None:
         """Bulk insert products (thread-safe)."""
         self._get_cache().insert_products(products)
     
-    def search_products(self, query: str, max_results: int = 5) -> List[Product]:
+    def search_products(self, query: str, max_results: int = 5) -> List[SearchProduct]:
         """Search products (thread-safe)."""
         return self._get_cache().search_products(query, max_results)
     
@@ -327,3 +328,92 @@ class ThreadSafeProductCache:
         """Context manager exit - closes current thread's connection."""
         self.close()
 
+
+
+class L2Cache:
+    """Async-friendly cache facade used by FastAPI app and tools.
+
+    This wraps ProductCache (FTS5 search) and a lightweight promo/version store
+    to provide the methods used by the interaction layer.
+    """
+
+    def __init__(self, db_path: str = "./data/cache.db"):
+        self.db_path = db_path
+        self._products = ThreadSafeProductCache(db_path)
+        self._products.initialize()
+        self._promos: dict[str, Promo] = {}
+        self._version: str = "v0"
+
+    @staticmethod
+    def _to_search_product(product: CacheProduct) -> SearchProduct:
+        """Convert cache schema product to FTS search product model."""
+        location = product.aisle if product.aisle.lower().startswith("aisle") else f"Aisle {product.aisle}"
+        return SearchProduct(
+            sku=product.sku,
+            name=product.name,
+            category=product.category,
+            location=location,
+            price=product.price or 0.0,
+            description=product.description or "",
+        )
+
+    @staticmethod
+    def _extract_aisle(location: str) -> str:
+        """Extract aisle token from location string."""
+        lower = location.lower().strip()
+        if lower.startswith("aisle"):
+            parts = location.split(maxsplit=1)
+            return parts[1] if len(parts) > 1 else location
+        return location
+
+    @staticmethod
+    def _to_cache_product(product: SearchProduct) -> CacheProduct:
+        """Convert FTS search product model to cache schema product."""
+        return CacheProduct(
+            sku=product.sku,
+            name=product.name,
+            aisle=L2Cache._extract_aisle(product.location),
+            category=product.category,
+            price=product.price,
+            description=product.description,
+        )
+
+    async def update_products(self, products: list[CacheProduct]) -> None:
+        """Replace product cache with new set of products."""
+        self._products.initialize()
+        search_products = [self._to_search_product(p) for p in products]
+        self._products.insert_products(search_products)
+
+    async def search_product(self, query: str) -> Optional[CacheProduct]:
+        """Find the best matching product for a query."""
+        results = self._products.search_products(query, max_results=1)
+        if not results:
+            return None
+        return self._to_cache_product(results[0])
+
+    async def update_promos(self, promos: list[Promo]) -> None:
+        """Upsert promotions in memory."""
+        for promo in promos:
+            self._promos[promo.id] = promo
+
+    async def get_active_promos(self, limit: int = 3) -> list[Promo]:
+        """Return active promotions sorted by priority desc."""
+        ordered = sorted(self._promos.values(), key=lambda p: p.priority, reverse=True)
+        return ordered[:limit]
+
+    async def set_version(self, version: str) -> None:
+        """Set sync version marker."""
+        self._version = version
+
+    async def preload_hot_data(self, l1_cache) -> None:
+        """Preload frequently used keys into L1 cache."""
+        promos = await self.get_active_promos(limit=3)
+        if promos:
+            l1_cache.set("active_promos", promos)
+
+    def stats(self) -> dict:
+        """Expose cache stats for health checks."""
+        return {
+            "version": self._version,
+            "promo_count": len(self._promos),
+        }

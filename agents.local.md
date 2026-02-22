@@ -9,7 +9,8 @@
 ## Architecture
 - **Edge Backend** (`reachy_edge/`) — FastAPI on port 8000, serves product search, promos, store info
 - **Karen Whisperer** (`../reachy_mini_karen_whisperer/`) — robot conversation app that calls the Edge Backend API via HTTP tools in the `retail_assistant` profile
-- The KW profile tools (`lookup_product`, `get_active_promos`, `get_store_info`) call `RETAIL_API_URL` (default `http://localhost:8000`)
+- The KW profile tools (`lookup_product`, `get_active_promos`, `get_store_info`) call `RETAIL_API_URL` (default `http://localhost:8080`)
+- Port 8000 is reserved by the Reachy Mini daemon; Edge Backend uses port 8080
 
 ## Environment notes
 - reachy-mini SDK v1.2.13 installed

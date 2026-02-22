@@ -3,7 +3,7 @@ import httpx
 import asyncio
 import os
 
-RETAIL_API_URL = os.getenv("RETAIL_API_URL", "http://localhost:8000")
+RETAIL_API_URL = os.getenv("RETAIL_API_URL", "http://localhost:8080")
 
 
 async def simulate_kw_tools():

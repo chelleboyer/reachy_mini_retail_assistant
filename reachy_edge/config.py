@@ -51,8 +51,10 @@ class Settings(BaseSettings):
     clarification_limit: int = 1
     
     # Server Configuration
+    # NOTE: Port 8000 is reserved by the Reachy Mini daemon (SDK).
+    # The Edge Backend runs on 8080 by default.
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = 8080
     debug: bool = True
     
     class Config:

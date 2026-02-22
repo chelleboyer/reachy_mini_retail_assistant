@@ -32,7 +32,7 @@ import httpx
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-EDGE_API_URL = os.getenv("RETAIL_API_URL", "http://localhost:8000")
+EDGE_API_URL = os.getenv("RETAIL_API_URL", "http://localhost:8080")
 TIMEOUT = 5.0
 
 
@@ -362,7 +362,7 @@ def phase4_talk_hint() -> None:
     # Create .env with:
     #   OPENAI_API_KEY=sk-...
     #   REACHY_MINI_CUSTOM_PROFILE=retail_assistant
-    #   RETAIL_API_URL=http://localhost:8000
+    #   RETAIL_API_URL=http://localhost:8080
     python -m reachy_mini_karen_whisperer.app
 
   The robot will:

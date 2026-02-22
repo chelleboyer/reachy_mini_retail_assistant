@@ -7,7 +7,7 @@
 
 ## 1. Purpose
 
-This SOP defines the **standard process** for onboarding Reachy Mini robots into the **π (Second Brain)** system, ensuring:
+This SOP defines the **standard process** for onboarding Reachy Mini robots into the **Second Brain** system, ensuring:
 
 * Fast, correct initial behavior
 * Consistent intelligence across robots
@@ -27,7 +27,7 @@ This SOP applies to:
 ### Required Roles
 
 * **Provisioning Operator**
-  Performs onboarding steps in π Admin UI / CLI
+  Performs onboarding steps in Admin UI / CLI
 
 * **Store Representative (Optional)**
   Confirms store map, promos, and placement
@@ -40,7 +40,7 @@ This SOP applies to:
 ## 3. Definitions
 
 * **Reachy Mini**: The physical robot
-* **π (Second Brain)**: Central intelligence, memory, and orchestration system
+* **Second Brain**: Central intelligence, memory, and orchestration system
 * **Provisioning Mode**: Safe startup state before activation
 * **L2 Cache**: Store-level cached knowledge pushed to Reachy
 * **Zone**: Physical placement area (entrance, electronics, aisle hub)
@@ -52,7 +52,7 @@ This SOP applies to:
 Before onboarding begins, confirm:
 
 * Reachy Mini is powered and network-capable
-* π system is accessible
+* Second Brain system is accessible
 * Operator has provisioning permissions
 * Store information is available:
 
@@ -84,9 +84,9 @@ Reachy behavior in this mode:
 
 ---
 
-### Step A2 — Create Store in π
+### Step A2 — Create Store in Second Brain
 
-In π Admin UI / CLI:
+In Admin UI / CLI:
 
 1. Create a new `store_id`
 2. Select or assign a **store template**
@@ -122,13 +122,13 @@ Defaults:
 
 ### Step A4 — Initial Brain Provisioning
 
-π performs:
+The system performs:
 
 * Validation of store config
 * Generation of **baseline L2 cache**
 * Signing of cache payload
 
-π pushes to Reachy:
+The system pushes to Reachy:
 
 * L2 cache (default knowledge)
 * L1 hot-start subset
@@ -161,7 +161,7 @@ New Reachy enters **PROVISIONING MODE** automatically.
 
 ### Step B2 — Assign to Existing Store
 
-In π Admin UI:
+In Admin UI:
 
 ```json
 {
@@ -176,7 +176,7 @@ In π Admin UI:
 
 ### Step B3 — Inherit Store Brain
 
-π automatically:
+The system automatically:
 
 * Assigns same L2 cache as existing Reachys
 * Applies optional zone overlays (if defined)
@@ -236,8 +236,8 @@ This ensures **useful but conservative behavior**.
 
 After onboarding:
 
-* Reachy checks in with π when idle
-* π pushes:
+* Reachy checks in with the Second Brain when idle
+* The system pushes:
 
   * promo updates
   * cache improvements
@@ -256,7 +256,7 @@ No re-provisioning required.
 
 ### Moving Reachy to a New Store
 
-1. π revokes old store binding
+1. The system revokes old store binding
 2. Reachy wipes local cache
 3. Reachy re-enters PROVISIONING MODE
 4. Repeat onboarding steps
@@ -267,7 +267,7 @@ No re-provisioning required.
 
 * Reachy enters **SAFE MODE**
 * Conversation disabled
-* Cache refresh requested from π
+* Cache refresh requested from the backend
 * Incident logged automatically
 
 ---
@@ -319,14 +319,14 @@ Before declaring onboarding complete:
 
   * product approval
   * ops approval
-  * update to π provisioning logic
+  * update to provisioning logic
 
 ---
 
 ## 14. Key Principle (Final Reminder)
 
 > **Reachy Minis are replaceable endpoints.
-> π is the intelligence.**
+> The Second Brain is the intelligence.**
 
 Onboarding must always preserve this invariant.
 

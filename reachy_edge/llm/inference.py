@@ -34,9 +34,9 @@ class LLMInference:
         """Initialize LLM client based on mode."""
         if self.mode == "openai":
             try:
-                from openai import OpenAI
-                self._client = OpenAI(api_key=self.api_key)
-                logger.info(f"Initialized OpenAI client with model {self.model}")
+                from openai import AsyncOpenAI
+                self._client = AsyncOpenAI(api_key=self.api_key)
+                logger.info(f"Initialized AsyncOpenAI client with model {self.model}")
             except ImportError:
                 logger.error("OpenAI package not installed. Install with: pip install openai")
             except Exception as e:
@@ -81,9 +81,9 @@ class LLMInference:
             return None
     
     async def _generate_openai(self, system_prompt: str, user_prompt: str) -> Optional[str]:
-        """Generate using OpenAI API."""
+        """Generate using OpenAI API (async)."""
         try:
-            response = self._client.chat.completions.create(
+            response = await self._client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},

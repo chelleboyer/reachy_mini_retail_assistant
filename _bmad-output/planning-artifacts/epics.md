@@ -1,4 +1,4 @@
----
+﻿---
 stepsCompleted: [step-01-validate-prerequisites, step-02-design-epics]
 inputDocuments:
   - docs/PRD.md
@@ -6,17 +6,17 @@ inputDocuments:
   - docs/deployment-architecture..md
 ---
 
-# π Universal Second Brain - Epic Breakdown
+# Universal Second Brain - Epic Breakdown
 
 ## Overview
 
-This document provides the complete epic and story breakdown for π Universal Second Brain, decomposing the requirements from the PRD and Architecture into implementable stories. Initial implementation focuses on Phase 1: Retail MVP with Reachy Mini robot.
+This document provides the complete epic and story breakdown for Universal Second Brain, decomposing the requirements from the PRD and Architecture into implementable stories. Initial implementation focuses on Phase 1: Retail MVP with Reachy Mini robot.
 
 ## Requirements Inventory
 
 ### Functional Requirements (FRs)
 
-**Universal π Platform:**
+**Universal Platform:**
 
 FR1: Multi-stage classification pipeline (Domain → Intent → Entity → Canonical → Response)
 FR2: Universal canonical storage (entities, events, knowledge, tasks, content)
@@ -44,7 +44,7 @@ FR20: Promo manager tool (active deals query)
 FR21: Selfie coordination tool (optional engagement)
 FR22: Movement/gesture tool (point, wave, nod)
 FR23: Fast LLM integration with cache-only prompts
-FR24: Async event emission to π backend
+FR24: Async event emission to backend
 FR25: Cache sync protocol with incremental updates
 FR26: Health and observability endpoints
 
@@ -63,7 +63,7 @@ NFR1: P95 interaction latency <1s (retail edge full interaction)
 NFR2: Fast path responses <500ms (cache-only queries)
 NFR3: L1 cache hit <10ms
 NFR4: L2 cache query <100ms
-NFR5: π classification <200ms for cached patterns
+NFR5: classification <200ms for cached patterns
 NFR6: Cache sync latency <5s
 NFR7: Knowledge graph query <100ms
 NFR8: Sub-100ms classification for cached patterns
@@ -104,7 +104,7 @@ NFR29: Multi-tenant isolation (store/user)
 **Scalability:**
 
 NFR30: Design for horizontal scaling from day 1
-NFR31: Support multiple edge devices per π instance
+NFR31: Support multiple edge devices per backend instance
 NFR32: Efficient domain-filtered cache generation
 
 **Code Quality (CRITICAL):**
@@ -130,8 +130,8 @@ NFR47: CI/CD pipeline with quality gates
 **From Architecture:**
 
 - **Technology Stack:**
-  - π Backend: FastAPI for REST API
-  - Edge Backend: FastAPI on Pi 5
+  - Backend: FastAPI for REST API
+  - Edge Backend: FastAPI on edge server
   - Storage: SQLite (edge/local), PostgreSQL (cloud/production), Qdrant (vector storage)
   - Cache: In-memory LRU (L1) + configurable L2 backend (SQLite FTS5 and/or Qdrant vector index)
   - Models: Inference + embedding models must be configurable (provider + model IDs)
@@ -139,7 +139,7 @@ NFR47: CI/CD pipeline with quality gates
 
 - **Deployment Models:**
   - Cloud deployment: Hugging Face Spaces (demo/SaaS)
-  - Edge deployment: Pi 5 local (privacy/offline)
+  - Edge deployment: edge server local (privacy/offline)
   - Hybrid deployment: Local + cloud sync (planned Phase 2)
 
 - **Domain Plugin Structure:**
@@ -150,7 +150,7 @@ NFR47: CI/CD pipeline with quality gates
   - Tool registry per domain
 
 - **Infrastructure:**
-  - π event ingestion API endpoint
+  - backend event ingestion API endpoint
   - Edge /interact, /cache/sync, /health endpoints
   - Async event emitter with batching
   - WebSocket support (planned Phase 2)
@@ -170,7 +170,7 @@ NFR47: CI/CD pipeline with quality gates
 
 **From Current Implementation:**
 
-- Active code exists: `reachy_edge/` (Pi 5 backend) and `pi_space/` (demo UI)
+- Active code exists: `reachy_edge/` (edge server backend) and `brain_space/` (demo UI)
 - Edge backend already running on http://127.0.0.1:8000
 - Demo UI ready for Hugging Face deployment
 - Basic keyword-based classifier implemented (needs LLM upgrade)
@@ -204,7 +204,7 @@ NFR47: CI/CD pipeline with quality gates
 - FR29: Clarification flow (detect ambiguity → ask once → answer or fallback)
 - FR30: Selfie flow (offer → pose → countdown → capture, no storage)
 
-**Epic 3 - π Intelligence Layer:**
+**Epic 3 - Intelligence Layer:**
 - FR1: Multi-stage classification pipeline (Domain → Intent → Entity → Canonical → Response)
 - FR2: Universal canonical storage (entities, events, knowledge, tasks, content)
 - FR3: Domain plugin system with YAML-based configurations
@@ -214,9 +214,9 @@ NFR47: CI/CD pipeline with quality gates
 - FR9: Knowledge graph with relationships
 - FR10: Evaluation and replay system for classifier testing
 - FR11: External data feed ingestion and normalization
-- FR24: Async event emission to π backend
+- FR24: Async event emission to backend
 
-**Epic 4 - Edge-π Sync:**
+**Epic 4 - Edge-Brain Sync:**
 - FR5: Cache generation engine with domain-filtered snapshots
 - FR6: Event ingestion API for all edge devices
 - FR12: Multi-tenant support with isolation
@@ -235,7 +235,7 @@ Store customers can query product locations through a REST API with fast, accura
 **FRs covered:** FR17, FR18, FR19, FR26 (4 FRs)
 
 **Implementation Notes:**
-- FastAPI backend on Pi 5
+- FastAPI backend on edge server
 - SQLite FTS5 for product search (L2)
 - In-memory LRU cache for hot data (L1)
 - REST endpoint: POST /interact (query → product location)
@@ -270,15 +270,15 @@ Reachy robot can have natural voice conversations with customers, using gestures
 
 ---
 
-### Epic 3: π Intelligence Layer - Classification + Memory
-π backend classifies any interaction into structured knowledge, builds knowledge graphs, and continuously learns from all edge devices.
+### Epic 3: Intelligence Layer - Classification + Memory
+backend classifies any interaction into structured knowledge, builds knowledge graphs, and continuously learns from all edge devices.
 
-**User Outcome:** π transforms unstructured conversations into searchable knowledge, enabling context-aware responses and cross-domain reasoning.
+**User Outcome:** The system transforms unstructured conversations into searchable knowledge, enabling context-aware responses and cross-domain reasoning.
 
 **FRs covered:** FR1, FR2, FR3, FR4, FR7, FR8, FR9, FR10, FR11, FR24 (10 FRs)
 
 **Implementation Notes:**
-- FastAPI backend for π
+- FastAPI backend for the backend
 - Multi-stage classification pipeline (5 stages)
 - Universal canonical storage (entities, events, knowledge, tasks, content)
 - SQLite for development, PostgreSQL for production
@@ -289,16 +289,16 @@ Reachy robot can have natural voice conversations with customers, using gestures
 - Event replay system for evaluation
 - External feed adapters (price feeds, promos)
 - Event ingestion from edge devices
-- Standalone π service (edge works without π initially)
+- Standalone backend service (edge works without the backend initially)
 
 **Why Third:** Core intelligence. Classification needs memory context, memory needs classification to populate. They're one cohesive system, not two separate pieces.
 
 ---
 
-### Epic 4: Edge-π Sync - Distributed Architecture
-π generates optimized caches for edge devices and syncs incrementally, supporting multiple stores/devices from one π instance.
+### Epic 4: Edge-Brain Sync - Distributed Architecture
+The system generates optimized caches for edge devices and syncs incrementally, supporting multiple stores/devices from one the backend instance.
 
-**User Outcome:** Edge devices stay fast with local cache while π continuously learns and improves classification across all interactions.
+**User Outcome:** Edge devices stay fast with local cache while the backend continuously learns and improves classification across all interactions.
 
 **FRs covered:** FR5, FR6, FR12, FR25 (4 FRs)
 
@@ -308,9 +308,9 @@ Reachy robot can have natural voice conversations with customers, using gestures
 - Multi-tenant architecture (store/user isolation)
 - Event ingestion endpoints (async, batched)
 - Cache versioning and rollback
-- Connects Epic 1-2 (edge) with Epic 3 (π)
+- Connects Epic 1-2 (edge) with Epic 3 (Backend)
 
-**Why Fourth:** Completes the second brain architecture. Edge runs fast locally, π learns globally.
+**Why Fourth:** Completes the second brain architecture. Edge runs fast locally, The system learns globally.
 
 ---
 
@@ -1207,25 +1207,25 @@ System meets all performance, reliability, and quality standards with full obser
 
 ---
 
-### Epic 3: π Intelligence Layer - Classification + Memory
+### Epic 3: Intelligence Layer - Classification + Memory
 
-#### Story 3.1: FastAPI Backend for π Service
+#### Story 3.1: FastAPI Backend for the backend Service
 
-**As a** π backend developer  
+**As a** backend developer  
 **I want** a FastAPI service structure for the universal intelligence layer  
 **So that** edge devices can send events and receive classifications
 
 **Acceptance Criteria:**
 
-**Given** I am setting up π backend  
+**Given** I am setting up backend  
 **When** I initialize the project  
 **Then** the following structure exists:
-- `pi_backend/main.py` with FastAPI app
-- `pi_backend/config.py` with environment configuration
-- `pi_backend/models/` for Pydantic models
-- `pi_backend/db/` for database modules
-- `pi_backend/classifier/` for classification pipeline
-- `pi_backend/requirements.txt` (fastapi, uvicorn, sqlalchemy, pydantic, pyyaml)
+- `backend/main.py` with FastAPI app
+- `backend/config.py` with environment configuration
+- `backend/models/` for Pydantic models
+- `backend/db/` for database modules
+- `backend/classifier/` for classification pipeline
+- `backend/requirements.txt` (fastapi, uvicorn, sqlalchemy, pydantic, pyyaml)
 
 **Given** the FastAPI app is running on localhost:8001  
 **When** I call GET /health  
@@ -1233,7 +1233,7 @@ System meets all performance, reliability, and quality standards with full obser
 ```json
 {
   "status": "healthy",
-  "service": "pi-backend",
+  "service": "backend",
   "version": "0.1.0",
   "classifier_status": "ready",
   "database_status": "connected"
@@ -1250,7 +1250,7 @@ System meets all performance, reliability, and quality standards with full obser
 - Database connection management
 
 **Definition of Done:**
-- [ ] π backend project structure created
+- [ ] backend project structure created
 - [ ] FastAPI app starts successfully
 - [ ] GET /health returns proper status
 - [ ] Clean architecture with separation of concerns
@@ -1264,7 +1264,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.2: Domain Plugin System with YAML Configuration
 
-**As a** π backend  
+**As a** backend  
 **I want** a domain plugin system that loads configurations from YAML files  
 **So that** new domains can be added without code changes
 
@@ -1273,9 +1273,9 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing the domain plugin system  
 **When** I create the plugin module  
 **Then** the following exists:
-- `pi_backend/plugins/` directory
-- `pi_backend/plugins/loader.py` with `PluginLoader` class
-- `pi_backend/plugins/domains/retail.yaml` (retail domain config)
+- `backend/plugins/` directory
+- `backend/plugins/loader.py` with `PluginLoader` class
+- `backend/plugins/domains/retail.yaml` (retail domain config)
 - Domain config schema: name, intents[], entities[], tools[], canonical_types[]
 
 **Given** retail domain YAML configuration  
@@ -1327,7 +1327,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.3: Multi-Stage Classification Pipeline (Stages 1-3)
 
-**As a** π backend  
+**As a** backend  
 **I want** the first 3 stages of classification (Domain → Intent → Entity)  
 **So that** I can transform raw queries into structured data
 
@@ -1336,8 +1336,8 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing classification pipeline  
 **When** I create the classifier module  
 **Then** the following exists:
-- `pi_backend/classifier/pipeline.py` with `ClassificationPipeline` class
-- `pi_backend/classifier/stages/` with `DomainClassifier`, `IntentClassifier`, `EntityExtractor`
+- `backend/classifier/pipeline.py` with `ClassificationPipeline` class
+- `backend/classifier/stages/` with `DomainClassifier`, `IntentClassifier`, `EntityExtractor`
 - LLM integration for classification (OpenAI API)
 
 **Given** a query "where are the apples"  
@@ -1390,7 +1390,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.4: Multi-Stage Classification Pipeline (Stages 4-5)
 
-**As a** π backend  
+**As a** backend  
 **I want** the final 2 stages of classification (Canonical → Response)  
 **So that** events are stored in universal format and responses are generated
 
@@ -1399,8 +1399,8 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am completing the classification pipeline  
 **When** I implement stages 4-5  
 **Then** the following exists:
-- `pi_backend/classifier/stages/canonical_mapper.py`
-- `pi_backend/classifier/stages/response_generator.py`
+- `backend/classifier/stages/canonical_mapper.py`
+- `backend/classifier/stages/response_generator.py`
 
 **Given** entities extracted: `[{"type": "product_name", "value": "apples"}]`  
 **When** Stage 4 (Canonical Mapping) runs  
@@ -1459,7 +1459,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.5: Universal Canonical Storage (Events + Entities)
 
-**As a** π backend  
+**As a** backend  
 **I want** universal storage for canonical events and entities  
 **So that** all interactions are stored in queryable format
 
@@ -1468,7 +1468,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing canonical storage  
 **When** I create the storage module  
 **Then** the following exists:
-- `pi_backend/db/canonical_store.py` with `CanonicalStore` class
+- `backend/db/canonical_store.py` with `CanonicalStore` class
 - Storage schema implemented with pluggable backend support (SQLite baseline, Qdrant for vectors)
 - Schema for events: `event_id, event_type, domain, timestamp, payload (JSON), confidence`
 - Schema for entities: `entity_id, entity_type, name, properties (JSON), created_at, updated_at`
@@ -1521,7 +1521,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.6: Knowledge Graph with Relationships
 
-**As a** π backend  
+**As a** backend  
 **I want** a knowledge graph that captures relationships between entities  
 **So that** I can answer complex queries with context
 
@@ -1530,7 +1530,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing the knowledge graph  
 **When** I create the graph module  
 **Then** the following exists:
-- `pi_backend/db/knowledge_graph.py` with `KnowledgeGraph` class
+- `backend/db/knowledge_graph.py` with `KnowledgeGraph` class
 - Relationship storage for `relationships` (subject_id, predicate, object_id, weight, created_at) with backend abstraction
 - Relationship types: located_in, part_of, associated_with, related_to
 
@@ -1580,7 +1580,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.7: Context and Reasoning Engine
 
-**As a** π backend  
+**As a** backend  
 **I want** a context engine that tracks sessions and uses knowledge graph  
 **So that** multi-turn conversations maintain context
 
@@ -1589,7 +1589,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing the context engine  
 **When** I create the module  
 **Then** the following exists:
-- `pi_backend/context/reasoning_engine.py` with `ReasoningEngine` class
+- `backend/context/reasoning_engine.py` with `ReasoningEngine` class
 - Session storage: `sessions` table (session_id, user_id, store_id, started_at, context (JSON))
 - Integration with KnowledgeGraph
 
@@ -1642,8 +1642,8 @@ System meets all performance, reliability, and quality standards with full obser
 #### Story 3.8: Event Ingestion API from Edge Devices
 
 **As an** edge device  
-**I want** to send interaction events to π asynchronously  
-**So that** π learns from all edge interactions
+**I want** to send interaction events to the backend asynchronously  
+**So that** The system learns from all edge interactions
 
 **Acceptance Criteria:**
 
@@ -1704,7 +1704,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.9: External Data Feed Ingestion
 
-**As a** π backend  
+**As a** backend  
 **I want** to ingest external data feeds (price updates, promo schedules)  
 **So that** edge caches stay current without manual updates
 
@@ -1713,10 +1713,10 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing feed ingestion  
 **When** I create the feed adapters  
 **Then** the following exists:
-- `pi_backend/feeds/` directory
-- `pi_backend/feeds/adapters/product_feed.py` for product catalogs
-- `pi_backend/feeds/adapters/promo_feed.py` for promotional data
-- `pi_backend/feeds/scheduler.py` for periodic ingestion
+- `backend/feeds/` directory
+- `backend/feeds/adapters/product_feed.py` for product catalogs
+- `backend/feeds/adapters/promo_feed.py` for promotional data
+- `backend/feeds/scheduler.py` for periodic ingestion
 
 **Given** a CSV product feed (SKU, name, price, location)  
 **When** product feed adapter runs  
@@ -1772,7 +1772,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 3.10: Evaluation and Replay System
 
-**As a** π developer  
+**As a** backend developer  
 **I want** to replay historical events and evaluate classification accuracy  
 **So that** I can test and improve the classifier
 
@@ -1781,9 +1781,9 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing the evaluation system  
 **When** I create the evaluation module  
 **Then** the following exists:
-- `pi_backend/eval/replay.py` with `ReplayEngine` class
-- `pi_backend/eval/metrics.py` for accuracy tracking
-- CLI tool: `python -m pi_backend.eval.replay --since "2026-01-01"`
+- `backend/eval/replay.py` with `ReplayEngine` class
+- `backend/eval/metrics.py` for accuracy tracking
+- CLI tool: `python -m backend.eval.replay --since "2026-01-01"`
 
 **Given** historical events in canonical storage  
 **When** I run replay with date range  
@@ -1837,11 +1837,11 @@ System meets all performance, reliability, and quality standards with full obser
 
 ---
 
-### Epic 4: Edge-π Sync - Distributed Architecture
+### Epic 4: Edge-Brain Sync - Distributed Architecture
 
 #### Story 4.1: Cache Generation Engine
 
-**As a** π backend  
+**As a** backend  
 **I want** to generate domain-filtered cache snapshots for edge devices  
 **So that** edges have optimized, up-to-date data
 
@@ -1850,7 +1850,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing cache generation  
 **When** I create the cache generator  
 **Then** the following exists:
-- `pi_backend/cache/generator.py` with `CacheGenerator` class
+- `backend/cache/generator.py` with `CacheGenerator` class
 - Function: `generate_cache(domain: str, store_id: str) -> CacheSnapshot`
 - Output format: JSON with products, promos, config
 
@@ -1924,13 +1924,13 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing cache sync  
 **When** I create the sync protocol  
 **Then** the following exists:
-- π endpoint: GET /cache/sync?domain=retail&store_id=store-001&since_version=v1.0.0-20260109
+- backend endpoint: GET /cache/sync?domain=retail&store_id=store-001&since_version=v1.0.0-20260109
 - Edge endpoint: POST /cache/apply (receives cache diff)
 - Diff format: added, updated, deleted items
 
 **Given** edge has cache version v1.0.0-20260109  
-**When** edge requests sync from π  
-**Then** π:
+**When** edge requests sync from the backend  
+**Then** the backend:
 1. Compares current cache with edge version
 2. Generates diff (added/updated/deleted products/promos)
 3. Returns diff with new version tag
@@ -1954,9 +1954,9 @@ System meets all performance, reliability, and quality standards with full obser
 **Then** edge retries with exponential backoff  
 **And** partial changes are rolled back (atomic sync)
 
-**Given** edge and π out of sync (version mismatch)  
+**Given** edge and backend out of sync (version mismatch)  
 **When** edge requests sync  
-**Then** π detects large gap and triggers full cache refresh  
+**Then** The backend detects large gap and triggers full cache refresh  
 **And** edge receives complete snapshot
 
 **Given** the sync protocol code  
@@ -1970,12 +1970,12 @@ System meets all performance, reliability, and quality standards with full obser
 
 **Definition of Done:**
 - [ ] Incremental sync protocol (diff-based)
-- [ ] GET /cache/sync endpoint on π
+- [ ] GET /cache/sync endpoint on the backend
 - [ ] POST /cache/apply endpoint on edge
 - [ ] Sync latency <5s (NFR6)
 - [ ] Atomic sync with rollback
 - [ ] Unit tests ≥80% coverage
-- [ ] Integration test (π ↔ edge)
+- [ ] Integration test (backend ↔ edge)
 - [ ] Code meets quality standards (NFR33-NFR47)
 
 **FR Coverage:** FR25 (Cache sync protocol with incremental updates), FR12 (Multi-tenant in sync)  
@@ -1985,7 +1985,7 @@ System meets all performance, reliability, and quality standards with full obser
 
 #### Story 4.3: Multi-Tenant Architecture
 
-**As a** π backend  
+**As a** backend  
 **I want** strict data isolation per store/user  
 **So that** multi-tenant deployment is secure and correct
 
@@ -1994,7 +1994,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing multi-tenancy  
 **When** I create the tenant module  
 **Then** the following exists:
-- `pi_backend/tenancy/tenant_context.py` with `TenantContext` class
+- `backend/tenancy/tenant_context.py` with `TenantContext` class
 - Middleware: `TenantMiddleware` (extracts tenant from headers/tokens)
 - Database: All tables have `tenant_id` column (store_id or user_id)
 
@@ -2051,8 +2051,8 @@ System meets all performance, reliability, and quality standards with full obser
 #### Story 4.4: Event Emission from Edge (Async Batching)
 
 **As an** edge device  
-**I want** to emit events to π asynchronously in batches  
-**So that** π learns without blocking edge interactions
+**I want** to emit events to the backend asynchronously in batches  
+**So that** The system learns without blocking edge interactions
 
 **Acceptance Criteria:**
 
@@ -2070,12 +2070,12 @@ System meets all performance, reliability, and quality standards with full obser
 1. Added to in-memory queue (non-blocking)
 2. Edge interaction continues immediately
 3. Background worker batches events
-4. Batch sent to π when queue reaches 50 or 30s timeout
+4. Batch sent to the backend when queue reaches 50 or 30s timeout
 
 **Given** event queue with 50 events  
-**When** batch is sent to π  
+**When** batch is sent to the backend  
 **Then** POST /events/ingest is called  
-**And** π returns 202 Accepted  
+**And** The backend returns 202 Accepted  
 **And** events are removed from queue  
 **And** retry on failure (3 attempts)
 
@@ -2085,7 +2085,7 @@ System meets all performance, reliability, and quality standards with full obser
 **And** oldest events are persisted to disk if queue overflows  
 **And** events sync when network recovers
 
-**Given** π is down  
+**Given** the backend is down  
 **When** batch send fails after retries  
 **Then** events are persisted to local storage  
 **And** ERROR is logged with retry schedule
@@ -2093,7 +2093,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** edge restarts  
 **When** emitter initializes  
 **Then** persisted events are loaded from disk  
-**And** resume sending to π
+**And** resume sending to the backend
 
 **Given** the event emitter code  
 **When** I review implementation  
@@ -2102,7 +2102,7 @@ System meets all performance, reliability, and quality standards with full obser
 - Retry logic with exponential backoff
 - Disk persistence for durability
 - Full type hints and docstrings
-- Unit tests with π mocked
+- Unit tests with backend mocked
 
 **Definition of Done:**
 - [ ] EventEmitter with async batching
@@ -2114,7 +2114,7 @@ System meets all performance, reliability, and quality standards with full obser
 - [ ] Integration test (edge → π)
 - [ ] Code meets quality standards (NFR33-NFR47)
 
-**FR Coverage:** FR24 (Async event emission to π)  
+**FR Coverage:** FR24 (Async event emission to the backend)  
 **Estimated Effort:** 8-10 hours
 
 ---
@@ -2137,7 +2137,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing unit tests  
 **When** I set up testing infrastructure  
 **Then** the following exists:
-- `pytest` configured for both edge and π backends
+- `pytest` configured for both edge and backends
 - `tests/` directories mirroring source structure
 - `pytest.ini` with coverage configuration (target: 80%)
 - `requirements-dev.txt` with test dependencies
@@ -2154,7 +2154,7 @@ System meets all performance, reliability, and quality standards with full obser
 **When** I execute `pytest --cov`  
 **Then** coverage report shows:
 - Edge backend: ≥80% coverage
-- π backend: ≥80% coverage
+- backend: ≥80% coverage
 - Failing tests cause CI to fail
 - Coverage report generated (HTML + terminal)
 
@@ -2169,7 +2169,7 @@ System meets all performance, reliability, and quality standards with full obser
 **And** async functions are properly awaited
 
 **Definition of Done:**
-- [ ] Unit tests for all modules (edge + π)
+- [ ] Unit tests for all modules (edge + backend)
 - [ ] ≥80% line coverage (NFR39)
 - [ ] Tests run in CI pipeline
 - [ ] No flaky tests (deterministic)
@@ -2192,7 +2192,7 @@ System meets all performance, reliability, and quality standards with full obser
 **Given** I am implementing integration tests  
 **When** I create test suites  
 **Then** the following exists:
-- `tests/integration/` directories for edge and π
+- `tests/integration/` directories for edge and backend
 - TestClient (FastAPI) for API testing
 - Docker Compose for test databases (SQLite/PostgreSQL)
 
@@ -2204,7 +2204,7 @@ System meets all performance, reliability, and quality standards with full obser
 - Response validation (status, schema, data)
 - Latency assertions (NFR1, NFR2)
 
-**Given** π backend endpoints (/events/ingest, /cache/sync, /health)  
+**Given** backend endpoints (/events/ingest, /cache/sync, /health)  
 **When** integration tests run  
 **Then** each endpoint is tested with:
 - Real database and classification pipeline
@@ -2212,14 +2212,14 @@ System meets all performance, reliability, and quality standards with full obser
 - Batch processing validation
 - Error handling verification
 
-**Given** edge → π sync flow  
+**Given** edge → the backend sync flow  
 **When** integration test runs  
 **Then** it:
-1. Generates cache on π
+1. Generates cache on the backend
 2. Edge fetches cache
 3. Edge applies cache
-4. Edge emits events to π
-5. π ingests and classifies events
+4. Edge emits events to the backend
+5. The backend ingests and classifies events
 6. Verifies end-to-end flow
 
 **Given** integration tests complete  
@@ -2263,7 +2263,7 @@ System meets all performance, reliability, and quality standards with full obser
 1. Generated (UUID) at request start
 2. Added to all log entries for that request
 3. Included in response headers (X-Trace-ID)
-4. Propagated to π in event payloads
+4. Propagated to the backend in event payloads
 
 **Given** a log entry  
 **When** logged  
@@ -2281,7 +2281,7 @@ System meets all performance, reliability, and quality standards with full obser
 }
 ```
 
-**Given** multi-service interaction (edge + π)  
+**Given** multi-service interaction (edge + backend)  
 **When** trace is logged  
 **Then** trace_id connects logs across services  
 **And** full request flow is traceable
@@ -2338,7 +2338,7 @@ System meets all performance, reliability, and quality standards with full obser
 - `llm_requests_total` (counter: model)
 - `llm_tokens_total` (counter: type=input/output)
 
-**Given** π backend metrics  
+**Given** backend metrics  
 **When** collected  
 **Then** they include:
 - `pi_events_ingested_total` (counter: domain, event_type)
@@ -2361,7 +2361,7 @@ System meets all performance, reliability, and quality standards with full obser
 - System health (uptime, error rate)
 
 **Definition of Done:**
-- [ ] Prometheus metrics for edge and π
+- [ ] Prometheus metrics for edge and backend
 - [ ] Key performance metrics (latency, cache, accuracy)
 - [ ] GET /metrics endpoint
 - [ ] Grafana dashboard (optional)
@@ -2387,7 +2387,7 @@ System meets all performance, reliability, and quality standards with full obser
 - Fast path (cache-only) <500ms (NFR2)
 - L1 cache hit <10ms (NFR3)
 - L2 cache query <100ms (NFR4)
-- π classification <200ms for cached patterns (NFR5)
+- classification <200ms for cached patterns (NFR5)
 - Cache sync <5s (NFR6)
 - Knowledge graph query <100ms (NFR7)
 
@@ -2443,7 +2443,7 @@ System meets all performance, reliability, and quality standards with full obser
 - SQL parameterized queries (no SQL injection)
 - Input sanitization for user queries (XSS prevention)
 - Rate limiting on API endpoints
-- Authentication/authorization (token-based for π)
+- Authentication/authorization (token-based for the backend)
 
 **Given** user query input "'; DROP TABLE products; --"  
 **When** processed  
@@ -2455,7 +2455,7 @@ System meets all performance, reliability, and quality standards with full obser
 **When** rate limiter is added  
 **Then** requests are limited to:
 - Edge: 100 requests/minute per device
-- π: 1000 requests/minute per tenant
+- the backend: 1000 requests/minute per tenant
 - Excess requests return 429 (Too Many Requests)
 
 **Given** sensitive data (tenant IDs, session tokens)  
@@ -2464,7 +2464,7 @@ System meets all performance, reliability, and quality standards with full obser
 **And** logs don't expose PII
 
 **Given** API authentication  
-**When** π endpoints are accessed  
+**When** backend endpoints are accessed  
 **Then** valid API key or JWT is required  
 **And** invalid auth returns 401 Unauthorized
 
@@ -2477,7 +2477,7 @@ System meets all performance, reliability, and quality standards with full obser
 - [ ] Input validation with Pydantic (NFR44)
 - [ ] SQL injection prevention (parameterized queries)
 - [ ] Rate limiting on all endpoints
-- [ ] Authentication for π API
+- [ ] Authentication for the backend API
 - [ ] Security scanning in CI
 - [ ] No PII in logs (NFR25, NFR26)
 
@@ -2708,15 +2708,15 @@ System meets all performance, reliability, and quality standards with full obser
 - Services start and pass health checks
 
 **Given** horizontal scaling requirement (NFR30)  
-**When** multiple π instances are deployed  
+**When** multiple backend instances are deployed  
 **Then** they:
 - Share database (stateless services)
 - Handle load balancing correctly
 - Don't conflict (no race conditions)
 
 **Given** multiple edge devices (NFR31)  
-**When** connected to single π instance  
-**Then** π handles:
+**When** connected to single backend instance  
+**Then** The backend handles:
 - Concurrent event ingestion from 10+ edges
 - Multi-tenant isolation (no data leakage)
 - Cache generation for all tenants
@@ -2770,8 +2770,8 @@ System meets all performance, reliability, and quality standards with full obser
 |------|-------------|---------|--------------|-----|------|
 | **Epic 1** | Core Edge Engine | 6 | 20-31 | 4 | - |
 | **Epic 2** | Human Interface Layer | 9 | 54-72 | 12 | - |
-| **Epic 3** | π Intelligence Layer | 10 | 77-96 | 10 | - |
-| **Epic 4** | Edge-π Sync | 4 | 34-42 | 4 | - |
+| **Epic 3** | Intelligence Layer | 10 | 77-96 | 10 | - |
+| **Epic 4** | Edge-Brain Sync | 4 | 34-42 | 4 | - |
 | **Epic 5** | Production Readiness | 10 | 112-140 | - | 47 |
 | **TOTAL** | | **39 stories** | **297-381 hrs** | **30 FRs** | **47 NFRs** |
 
@@ -2779,8 +2779,8 @@ System meets all performance, reliability, and quality standards with full obser
 
 1. **Epic 1** (Foundation): HTTP API + cache → Proves edge architecture
 2. **Epic 2** (Human Layer): Voice + gestures + LLM → Complete robot experience
-3. **Epic 3** (Intelligence): Classification + memory → π brain operational
-4. **Epic 4** (Sync): Edge ↔ π connection → Distributed architecture live
+3. **Epic 3** (Intelligence): Classification + memory → backend brain operational
+4. **Epic 4** (Sync): Edge ↔ the backend connection → Distributed architecture live
 5. **Epic 5** (Quality): Throughout + final hardening → Production-ready
 
 ### All Requirements Covered

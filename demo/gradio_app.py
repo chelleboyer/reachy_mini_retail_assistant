@@ -1,4 +1,4 @@
-"""Gradio Demo: Reachy Mini Retail Assistant
+"""Gradio Demo: Retail Assistant
 Demonstrates conversational product search with backend telemetry.
 """
 import gradio as gr
@@ -236,7 +236,7 @@ def clear_chat():
 # Build Gradio interface
 with gr.Blocks(theme=gr.themes.Soft()) as demo:
     gr.Markdown("""
-    # 🤖 Reachy Mini: Retail Assistant Demo
+    # 🤖 Retail Assistant Demo
     
     **Interaction Loop Demonstration:**
     - Customer asks questions in natural language

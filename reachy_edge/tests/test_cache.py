@@ -67,6 +67,7 @@ async def test_l2_cache_products():
         assert result.aisle == "5"
     
     finally:
+        cache._products.close_all()
         os.unlink(db_path)
 
 
@@ -95,4 +96,5 @@ async def test_l2_cache_promos():
         assert active[0].id == "PROMO1"  # Higher priority first
     
     finally:
+        cache._products.close_all()
         os.unlink(db_path)

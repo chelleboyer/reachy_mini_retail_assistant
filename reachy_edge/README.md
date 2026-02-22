@@ -1,20 +1,20 @@
 # Reachy Edge Backend
 
-**Retail domain implementation for the π Universal Second Brain**
+**Retail domain implementation for the Universal Second Brain**
 
-Fast, scalable Raspberry Pi 5 backend for Reachy Mini robot with local cache and π integration.
+Fast, scalable edge backend with local cache and Second Brain integration.
 
 ---
 
 ## Overview
 
-This is the **retail domain edge interface** for the π Universal Second Brain architecture.
+This is the **retail domain edge interface** for the Universal Second Brain architecture.
 
-**Key Concept:** The edge backend is domain-specific (retail tools, retail cache, retail interactions), while π provides the universal classification and memory layer.
+**Key Concept:** The edge backend is domain-specific (retail tools, retail cache, retail interactions), while the Second Brain provides the universal classification and memory layer.
 
 Think of it as:
 - **Edge:** Fast conversational interface optimized for retail
-- **π:** Universal intelligence layer that learns across all domains
+- **Second Brain:** Universal intelligence layer that learns across all domains
 
 This same architecture pattern applies to any domain:
 - Personal assistant → Phone/laptop edge device
@@ -32,20 +32,20 @@ This same architecture pattern applies to any domain:
 └──────────────┬──────────────────────────┘
                │
 ┌──────────────▼──────────────────────────┐
-│  FastAPI Backend (Pi 5)                 │
+│  FastAPI Backend                        │
 │  ┌────────────────────────────────────┐ │
 │  │ REST API                           │ │
 │  │  /interact (POST)                  │ │
 │  │  /cache/sync (POST)                │ │
 │  │  /health (GET)                     │ │
 │  └────────────────────────────────────┘ │
-│                                          │
+│                                         │
 │  ┌─────────────┬─────────────────────┐  │
 │  │ L1 Cache    │ L2 Backend          │  │
 │  │ (RAM, hot)  │ (SQLite or Qdrant)  │  │
 │  │ ≤1MB        │  store map) ≤100MB  │  │
 │  └─────────────┴─────────────────────┘  │
-│                                          │
+│                                         │
 │  ┌────────────────────────────────────┐ │
 │  │ Retail Domain Tools                │ │
 │  │  - product_lookup (SKU/name → loc) │ │
@@ -53,26 +53,26 @@ This same architecture pattern applies to any domain:
 │  │  - selfie (camera coordination)    │ │
 │  │  - movement (point, gesture)       │ │
 │  └────────────────────────────────────┘ │
-│                                          │
+│                                         │
 │  ┌────────────────────────────────────┐ │
 │  │ Fast LLM (Optional)                │ │
 │  │  - Cache-only prompts              │ │
 │  │  - Strict output contract          │ │
 │  │  - ≤35 word responses              │ │
 │  └────────────────────────────────────┘ │
-│                                          │
+│                                         │
 │  ┌────────────────────────────────────┐ │
-│  │ π Client (Event Emitter)           │ │
+│  │ Brain Client (Event Emitter)       │ │
 │  │  - Async interaction logging       │ │
 │  │  - Batched event upload            │ │
 │  │  - Cache sync requests             │ │
 │  └────────────────────────────────────┘ │
-└──────────────────────────────────────────┘
+└─────────────────────────────────────────┘
           │
           │ Events + Cache Sync
           │
 ┌─────────▼─────────────────────────────────┐
-│  π Universal Second Brain                 │
+│  Universal Second Brain                   │
 │  - Multi-stage classification             │
 │  - Canonical storage (all domains)        │
 │  - Knowledge graph                        │
@@ -84,16 +84,16 @@ This same architecture pattern applies to any domain:
 
 ## Universal vs Domain-Specific
 
-| Component | Universal (π) | Retail Edge |
+| Component | Universal (Second Brain) | Retail Edge |
 |-----------|--------------|-------------|
-| **Classification** | Multi-domain, multi-stage | N/A (done by π) |
+| **Classification** | Multi-domain, multi-stage | N/A (done by Second Brain) |
 | **Storage** | Canonical (entities, events, etc.) | L1/L2 cache (retail-filtered) |
 | **Tools** | Domain-agnostic abstractions | Retail-specific (product lookup, promos) |
 | **Context** | Cross-domain reasoning | Session-local |
-| **Learning** | Continuous, global | None (reads from π cache) |
+| **Learning** | Continuous, global | None (reads from backend cache) |
 | **Interface** | API for all domains | FastAPI for Reachy robot |
 
-**Key Insight:** This retail edge could be replaced with a personal assistant edge, business bot edge, etc., all powered by the same π backend.
+**Key Insight:** This retail edge could be replaced with a personal assistant edge, business bot edge, etc., all powered by the same backend.
 
 ---
 
@@ -101,7 +101,7 @@ This same architecture pattern applies to any domain:
 
 ### Performance
 - **Fast L1/L2 Cache**: <10ms L1 hits, <100ms L2 FTS5 queries
-- **Async Event Emission**: Non-blocking π interaction logging
+- **Async Event Emission**: Non-blocking interaction logging
 - **Local-First**: Works offline with cached knowledge
 
 ### Retail Domain Tools
@@ -142,10 +142,10 @@ ZONE_ID=ENTRANCE
 LLM_MODE=openai
 OPENAI_API_KEY=your_key_here
 
-# π Integration
-PI_URL=https://pi.example.com
-PI_API_KEY=your_pi_key
-PI_ENABLED=false
+# Second Brain Integration
+BACKEND_URL=https://brain.example.com
+BACKEND_API_KEY=your_brain_key
+BACKEND_ENABLED=false
 
 # Retrieval
 L2_BACKEND=sqlite
@@ -188,7 +188,7 @@ Server starts at http://127.0.0.1:8000
 uvicorn reachy_edge.main:app --host 0.0.0.0 --port 8000 --workers 2
 ```
 
-For Pi 5 deployment with systemd, see [DEPLOYMENT.md](DEPLOYMENT.md) (coming soon)
+For production deployment, see [DEPLOYMENT.md](DEPLOYMENT.md) (coming soon)
 
 ---
 
@@ -220,7 +220,7 @@ For Pi 5 deployment with systemd, see [DEPLOYMENT.md](DEPLOYMENT.md) (coming soo
 
 ### POST /cache/sync
 
-**Receive cache updates from π** - Updates L1/L2 with new retail data
+**Receive cache updates from the Second Brain** - Updates L1/L2 with new retail data
 
 **Request:**
 ```json
@@ -294,7 +294,7 @@ curl http://localhost:8000/health
 ### Phase 1: Retail MVP ✅
 - FastAPI backend with L1/L2 cache
 - Basic retail tools (product lookup, promos)
-- Event emission to π
+- Event emission to Second Brain
 - Health monitoring
 
 ### Phase 2: Production Ready 🚧
@@ -302,7 +302,7 @@ curl http://localhost:8000/health
 - Voice I/O (STT/TTS)
 - Gesture control (point, nod, wave)
 - Selfie coordination
-- Systemd deployment for Pi 5
+- Systemd deployment
 - Cache sync protocol v1
 
 ### Phase 3: Advanced Features 📋
@@ -331,11 +331,11 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 
 ## Why Edge + π Architecture?
 
-| Traditional Monolith | Edge + π Universal |
+| Traditional Monolith | Edge + Universal Brain |
 |---------------------|-------------------|
 | All logic in robot | Fast edge + smart cloud |
 | Slow on every query | <10ms cache hits |
-| No learning | Continuous learning via π |
+| No learning | Continuous learning via Second Brain |
 | Retail-only | Retail today, any domain tomorrow |
 | Hard to debug | Full observability |
 | Retraining needed | Config changes only |
@@ -347,19 +347,19 @@ locust -f tests/load/locustfile.py --host http://localhost:8000
 ## Related Documentation
 
 - [PRD.md](../docs/PRD.md) - Product requirements and vision
-- [UNIVERSAL-ARCHITECTURE.md](../docs/UNIVERSAL-ARCHITECTURE.md) - Full π architecture
-- [π Space README](../pi_space/README.md) - Demo UI documentation
+- [UNIVERSAL-ARCHITECTURE.md](../docs/UNIVERSAL-ARCHITECTURE.md) - Full architecture
+- [Brain Space README](../brain_space/README.md) - Demo UI documentation
 
 ---
 
-**Built with ❤️ as the first domain implementation of π Universal Second Brain**
+**Built with ❤️ as the first domain implementation of Universal Second Brain**
 
 | Metric | Target | Implementation |
 |--------|--------|----------------|
-| L1 hit | <10ms | In-memory dict |
-| L2 hit | <100ms | SQLite FTS5 |
+| L1 hit | <10ms | In-memory dict  |
+| L2 hit | <100ms | SQLite FTS5    |
 | LLM call | <500ms | OpenAI/local |
-| Event batch | async | No blocking |
+| Event batch | async | No blocking|
 
 ## Testing
 
@@ -378,7 +378,7 @@ The backend is designed to integrate with the [reachy_mini_conversation_app](htt
 1. Wire `MovementManager` to `movement` tool
 2. Add retail tools to conversation flow
 3. Replace OpenAI Realtime with cache-first approach
-4. Emit events to π for classification
+4. Emit events to Second Brain for classification
 
 ## License
 

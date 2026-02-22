@@ -93,9 +93,16 @@ class ProductCache:
         
         conn.commit()
         logger.info("database_initialized", table="products_fts", tokenizer="porter unicode61")
-    
+
+    def clear(self) -> None:
+        """Delete all rows from the FTS5 table."""
+        conn = self._get_connection()
+        conn.execute("DELETE FROM products_fts")
+        conn.commit()
+        logger.info("database_cleared", table="products_fts")
+
     def insert_product(self, product: SearchProduct) -> None:
-        """Insert a single product into the cache.
+        """Insert a single product into the FTS5 cache.
         
         Args:
             product: Product model to insert
@@ -229,6 +236,37 @@ class ProductCache:
             logger.warning("search_failed", query=query, error=str(e))
             return []
     
+    def get_all_products(self, limit: int = 100) -> List[SearchProduct]:
+        """Return all products (unranked), limited by *limit*."""
+        conn = self._get_connection()
+        try:
+            cursor = conn.execute(
+                "SELECT sku, name, category, location, price, description FROM products_fts LIMIT ?",
+                (limit,),
+            )
+            return [
+                SearchProduct(
+                    sku=row["sku"],
+                    name=row["name"],
+                    category=row["category"],
+                    location=row["location"],
+                    price=float(row["price"]),
+                    description=row["description"],
+                )
+                for row in cursor.fetchall()
+            ]
+        except Exception:
+            return []
+
+    def product_count(self) -> int:
+        """Return total number of products in the FTS5 table."""
+        conn = self._get_connection()
+        try:
+            row = conn.execute("SELECT count(*) AS c FROM products_fts").fetchone()
+            return int(row["c"]) if row else 0
+        except Exception:
+            return 0
+
     def close(self) -> None:
         """Close database connection.
         
@@ -299,11 +337,23 @@ class ThreadSafeProductCache:
     def insert_products(self, products: List[SearchProduct]) -> None:
         """Bulk insert products (thread-safe)."""
         self._get_cache().insert_products(products)
-    
+
+    def clear(self) -> None:
+        """Clear all products (thread-safe)."""
+        self._get_cache().clear()
+
     def search_products(self, query: str, max_results: int = 5) -> List[SearchProduct]:
         """Search products (thread-safe)."""
         return self._get_cache().search_products(query, max_results)
-    
+
+    def get_all_products(self, limit: int = 100) -> List[SearchProduct]:
+        """Return all products (thread-safe)."""
+        return self._get_cache().get_all_products(limit)
+
+    def product_count(self) -> int:
+        """Return product count (thread-safe)."""
+        return self._get_cache().product_count()
+
     def close(self) -> None:
         """Close current thread's connection."""
         if hasattr(self._local, 'cache'):
@@ -381,8 +431,25 @@ class L2Cache:
     async def update_products(self, products: list[CacheProduct]) -> None:
         """Replace product cache with new set of products."""
         self._products.initialize()
+        self._products.clear()
         search_products = [self._to_search_product(p) for p in products]
         self._products.insert_products(search_products)
+
+    async def search_products(self, query: str, max_results: int = 5) -> list[SearchProduct]:
+        """Search products using FTS5 full-text search with BM25 ranking.
+
+        Args:
+            query: Search query string
+            max_results: Maximum number of results to return
+
+        Returns:
+            List of matching products ordered by relevance
+        """
+        return self._products.search_products(query, max_results=max_results)
+
+    async def get_all_products(self, limit: int = 100) -> list[SearchProduct]:
+        """Return all products (unranked), limited by *limit*."""
+        return self._products.get_all_products(limit)
 
     async def search_product(self, query: str) -> Optional[CacheProduct]:
         """Find the best matching product for a query."""
@@ -415,5 +482,7 @@ class L2Cache:
         """Expose cache stats for health checks."""
         return {
             "version": self._version,
+            "product_count": self._products.product_count(),
             "promo_count": len(self._promos),
+            "status": "active",
         }

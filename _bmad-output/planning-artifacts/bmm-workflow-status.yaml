@@ -1,4 +1,4 @@
-# Workflow Status - π Universal Second Brain
+﻿# Workflow Status - Universal Second Brain
 
 # This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
 # Implementation phase is tracked separately in sprint-status.yaml
@@ -86,40 +86,75 @@ workflow_status:
         overallGrade: "A+"
         note: "Gate check PASSED - 0 critical issues, ready for Phase 4 implementation"
 
-  # Phase 4: Implementation
+  # Phase 4: Implementation (RE-BASELINED 2026-02-21)
   - phase: 4
     name: "Implementation"
-    status: "ready"
-    note: "Tracked in sprint-status.yaml - all 39 stories ready for development"
+    status: "re-baselined"
+    note: >
+      Re-baselined on 2026-02-21. Original plan (5 epics, 39 stories) replaced with
+      Retail Data Service MVP (1 epic, 6 stories). This repo is now a data microservice
+      consumed by Karen Whisperer (https://github.com/chelleboyer/reachy_mini_karen_whisperer).
+      Stories 1.1 (FastAPI setup) and 1.2 (L2 cache) from original plan are reused.
+      All other original stories are FROZEN. See brownfield-assessment-2026-02-21.md.
     workflows:
       - id: "sprint-planning"
         status: "_bmad-output/planning-artifacts/sprint-status.yaml"
-        completed: "2026-01-10"
-        agent: "sm"
-        note: "Sprint status created - 5 epics, 39 stories, Sprint 0 goals defined"
+        completed: "2026-02-21"
+        agent: "party-mode"
+        note: "Sprint status re-baselined — 1 epic (Retail Data Service MVP), 6 stories"
+      
+      - id: "brownfield-assessment"
+        status: "_bmad-output/planning-artifacts/brownfield-assessment-2026-02-21.md"
+        completed: "2026-02-21"
+        agent: "party-mode"
+        note: "Full codebase audit — keep/freeze/cut decisions documented"
+      
+      - id: "mvp-stories"
+        status: "_bmad-output/planning-artifacts/mvp-stories-2026-02-21.md"
+        completed: "2026-02-21"
+        agent: "party-mode"
+        note: "6 focused stories for data service MVP with Karen Whisperer integration"
 
-# Current State Summary
-current_phase: "Phase 4 (Implementation) - Ready to Begin"
-phase_3_gate: "PASSED (Grade A+)"
-phase_4_status: "Sprint planning complete"
-next_workflow: "create-story or dev-story (begin Epic 1, Story 1.1)"
-next_agent: "sm (to create story) or dev (to implement)"
+# Current State Summary (RE-BASELINED 2026-02-21)
+current_phase: "Phase 4 (Implementation) - Re-baselined as Retail Data Service MVP"
+phase_3_gate: "PASSED (Grade A+) — original gate still valid for foundation"
+phase_4_status: "Re-baselined: 1 epic, 6 stories (down from 5 epics, 39 stories)"
+next_workflow: "Begin MVP Story 4 (Data Loading & Startup Pipeline)"
+next_agent: "dev"
 blocking_items: []
 completed_count: 8
 required_remaining: 0
 ready_for_implementation: true
 sprint_status_file: "_bmad-output/planning-artifacts/sprint-status.yaml"
+mvp_stories_file: "_bmad-output/planning-artifacts/mvp-stories-2026-02-21.md"
+brownfield_assessment_file: "_bmad-output/planning-artifacts/brownfield-assessment-2026-02-21.md"
+integration_repo: "https://github.com/chelleboyer/reachy_mini_karen_whisperer"
 
 # Active Code
 active_code:
   - path: "reachy_edge/"
-    status: "running"
-    note: "Pi 5 edge backend - retail domain implementation"
+    status: "active — data service foundation"
+    note: "Cache system, tool framework, models, FastAPI skeleton — being rewired as REST data service"
   
-  - path: "pi_space/"
-    status: "demo"
-    note: "Gradio demo UI for π classification system"
+  - path: "demo/"
+    status: "consolidate"
+    note: "Merge fuzzy matching + expanded products into reachy_edge, then freeze"
+  
+  - path: "backend/"
+    status: "frozen"
+    note: "Second Brain backend — deferred to v2"
+  
+  - path: "brain_space/"
+    status: "frozen"
+    note: "Standalone demo — not connected to anything"
   
   - path: "docs/"
     status: "updated"
-    note: "Documentation fully updated to reflect universal vision (2026-01-10)"
+    note: "PRD and architecture docs remain valid as long-term vision; MVP is a subset"
+
+# Architecture Note
+architecture_note: >
+  This repo is a pure data microservice (product search, promos, store info)
+  consumed by reachy_mini_karen_whisperer's custom OpenAI tools via HTTP.
+  Karen Whisperer handles: voice, LLM, robot gestures, signal intelligence, Slack.
+  This repo handles: product data, FTS5 search, promo data, store configuration.

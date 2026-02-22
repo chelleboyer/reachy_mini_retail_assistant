@@ -1,4 +1,4 @@
-# Sprint Status - π Universal Second Brain
+﻿# Sprint Status - Universal Second Brain
 
 # generated: 2026-01-10
 # project: reachy-mini-retail-assistant
@@ -35,88 +35,83 @@
 # - SM typically creates next story after previous one is 'done' to incorporate learnings
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
-generated: 2026-01-10
+generated: 2026-02-21
 project: reachy-mini-retail-assistant
 project_key: reachy-mini-retail-assistant
 tracking_system: bmm
 story_location: _bmad-output/implementation-artifacts/stories
+integration_repo: https://github.com/chelleboyer/reachy_mini_karen_whisperer
+
+# RE-BASELINE NOTE (2026-02-21):
+# Project re-scoped from "Universal Second Brain" (5 epics, 39 stories) to
+# "Retail Data Service MVP" (1 epic, 6 stories).
+# This repo is a data microservice consumed by Karen Whisperer's custom tools.
+# Previous stories 1.1 and 1.2 (FastAPI setup, L2 cache) are DONE and reused.
+# Stories 1.3-1.6 from the original plan are REPLACED by the new MVP stories below.
+# All original Epic 2-5 stories are FROZEN (deferred to v2+).
 
 development_status:
-  # Epic 1: Core Edge Engine - Minimal Viable Edge
-  epic-1: in-progress
-  1-1-fastapi-project-setup-with-basic-health-endpoint: done
-  1-2-l2-cache-sqlite-fts5-product-storage: done
-  1-3-product-lookup-tool-with-fts5-search: in-progress
-  1-4-l1-cache-in-memory-lru-for-hot-products: backlog
-  1-5-interact-endpoint-for-product-queries: in-progress
-  1-6-enhanced-health-endpoint-with-cache-stats: in-progress
-  epic-1-retrospective: optional
-  
-  # Epic 2: Human Interface Layer - Voice + Personality
-  epic-2: backlog
-  2-1-voice-input-integration-stt: backlog
-  2-2-voice-output-integration-tts: backlog
-  2-3-gesture-control-system: backlog
-  2-4-llm-integration-with-cache-only-prompts: backlog
-  2-5-promo-manager-tool: backlog
-  2-6-interaction-state-machine-core-flows: backlog
-  2-7-deal-promotion-flow: backlog
-  2-8-wayfinding-flow-with-gestures: backlog
-  2-9-selfie-flow-optional-engagement: backlog
-  epic-2-retrospective: optional
-  
-  # Epic 3: π Intelligence Layer - Classification + Memory
-  epic-3: backlog
-  3-1-fastapi-backend-for-pi-service: backlog
-  3-2-domain-plugin-system-with-yaml-configuration: backlog
-  3-3-multi-stage-classification-pipeline-stages-1-3: backlog
-  3-4-multi-stage-classification-pipeline-stages-4-5: backlog
-  3-5-universal-canonical-storage-events-entities: backlog
-  3-6-knowledge-graph-with-relationships: backlog
-  3-7-context-and-reasoning-engine: backlog
-  3-8-event-ingestion-api-from-edge-devices: backlog
-  3-9-external-data-feed-ingestion: backlog
-  3-10-evaluation-and-replay-system: backlog
-  epic-3-retrospective: optional
-  
-  # Epic 4: Edge-π Sync - Distributed Architecture
-  epic-4: backlog
-  4-1-cache-generation-engine: backlog
-  4-2-incremental-cache-sync-protocol: backlog
-  4-3-multi-tenant-architecture: backlog
-  4-4-event-emission-from-edge-async-batching: backlog
-  epic-4-retrospective: optional
-  
-  # Epic 5: Production Readiness - Quality & Observability
-  epic-5: backlog
-  5-1-comprehensive-unit-testing-80-coverage: backlog
-  5-2-integration-testing-api-database: backlog
-  5-3-structured-logging-with-trace-ids: backlog
-  5-4-metrics-collection-and-monitoring: backlog
-  5-5-performance-profiling-and-optimization: backlog
-  5-6-security-hardening: backlog
-  5-7-error-handling-and-resilience: backlog
-  5-8-ci-cd-pipeline-with-quality-gates: backlog
-  5-9-documentation-and-code-quality-standards: backlog
+  # Epic: Retail Data Service MVP (re-baselined 2026-02-21)
+  epic-mvp: done
+  mvp-0-mind-monitor-dashboard: done             # reachy_edge/mind/ — SSE dashboard
+  mvp-1-product-search-api-endpoint: done         # GET /api/products/search
+  mvp-2-promo-data-api-endpoint: done             # GET /api/promos/active
+  mvp-3-store-config-and-health-endpoint: done    # GET /api/store/info
+  mvp-4-data-loading-and-startup-pipeline: done   # 44 products auto-loaded; sample promos TBD
+  mvp-5-karen-whisperer-integration-tools: done      # 3 tools + tools.txt + instructions.txt + .env
+  mvp-6-end-to-end-integration-test: done             # 26 tests: happy, error, load, conversation flow
+  epic-mvp-retrospective: optional
+
+  # ---- LEGACY (from original plan, preserved for reference) ----
+
+  # Epic 1: Core Edge Engine (PARTIALLY DONE - reused in MVP)
+  # epic-1: partially-done
+  # 1-1-fastapi-project-setup-with-basic-health-endpoint: done  # ← reused
+  # 1-2-l2-cache-sqlite-fts5-product-storage: done               # ← reused
+  # 1-3 through 1-6: replaced by MVP stories above
+
+  # Epics 2-5: FROZEN (deferred to v2+)
+  # epic-2: frozen  # Human Interface Layer → Karen Whisperer handles this
+  # epic-3: frozen  # Intelligence Layer → v2 "Second Brain"
+  # epic-4: frozen  # Edge-Brain Sync → v2
+  # epic-5: frozen  # Production Readiness → post-MVP
   5-10-deployment-and-scalability-testing: backlog
   epic-5-retrospective: optional
 
-# Sprint Metrics
-total_epics: 5
-total_stories: 39
+# Sprint Metrics (updated 2026-02-21T23:30Z)
+total_epics: 1
+total_stories: 7
 epics_in_progress: 1
-stories_ready: 1
-stories_completed: 2
+stories_ready: 0
+stories_completed: 7  # ALL MVP STORIES DONE 🎉
 current_sprint: 1
 
-# Sprint 0 Recommendations (from test-design-system.md)
-sprint_0_goals:
-  - Set up test infrastructure (pytest, coverage reporting)
-  - Configure structured logging (trace IDs, JSON format)
-  - Set up CI/CD pipeline with quality gates
-  - Configure metrics collection (Prometheus)
-  - Create project scaffolding (edge + π backends)
-  
+# Foundation from original Epic 1 (reused, not re-counted)
+foundation_from_original:
+  - 1-1-fastapi-project-setup: done
+  - 1-2-l2-cache-sqlite-fts5: done
+  note: "FastAPI skeleton and L2 cache system are production-quality and reused as-is"
+
+# MVP Sprint Goals
+mvp_goals:
+  - "\u2705 Expose product search, promo, and store info as REST API endpoints"
+  - Merge demo's enhanced product data (80+ products) into reachy_edge
+  - Create Karen Whisperer custom tools (lookup_product, get_promos, get_store_info)
+  - End-to-end integration test (tool → API → cache → response)
+
+# Integration
+karen_whisperer_repo: https://github.com/chelleboyer/reachy_mini_karen_whisperer
+architecture: "Karen Whisperer (bot) → HTTP → Retail Assistant API (this repo) → FTS5 Cache"
+
 # Next Action
-next_story: 1-3-product-lookup-tool-with-fts5-search
-recommended_by: start-now.md + implementation-readiness-report (Grade A+, PROCEED)
+next_story: none — MVP COMPLETE
+next_action: Ship it! Deploy to robot and test with live customers
+recommended_order:
+  - "mvp-4-data-loading-and-startup-pipeline  # DONE"
+  - "mvp-1-product-search-api-endpoint          # DONE"
+  - "mvp-2-promo-data-api-endpoint              # DONE"
+  - "mvp-3-store-config-and-health-endpoint     # DONE"
+  - "mvp-5-karen-whisperer-integration-tools     # DONE"
+  - "mvp-6-end-to-end-integration-test           # DONE"
+mvp_stories_doc: _bmad-output/planning-artifacts/mvp-stories-2026-02-21.md
+brownfield_assessment: _bmad-output/planning-artifacts/brownfield-assessment-2026-02-21.md

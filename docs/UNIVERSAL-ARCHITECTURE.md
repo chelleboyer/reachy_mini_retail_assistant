@@ -1,4 +1,4 @@
-# 🧠 π (Pi) Universal Second Brain - Architecture
+# 🧠 Universal Second Brain - Architecture
 
 **A domain-agnostic intelligence layer that classifies any interaction into structured knowledge**
 
@@ -6,7 +6,7 @@
 
 ## Vision
 
-π is a **universal classification and memory system** that can power any AI assistant, regardless of domain. It transforms unstructured interactions into searchable, actionable knowledge while maintaining full explainability.
+The Universal Second Brain is a **universal classification and memory system** that can power any AI assistant, regardless of domain. It transforms unstructured interactions into searchable, actionable knowledge while maintaining full explainability.
 
 **Think of it as:**
 - **Logseq/Roam** but with automatic classification
@@ -75,27 +75,27 @@
 ### Three-Layer System
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│         EDGE LAYER (Domain-Specific)                    │
+┌───────────────────────────────────────────────────────┐
+│         EDGE LAYER (Domain-Specific)                  │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐  │
 │  │  Reachy  │ │   App    │ │   Bot    │ │   CLI    │  │
 │  │  Robot   │ │ (Mobile) │ │ (Slack)  │ │  (Voice) │  │
 │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘  │
-│       └────────────┼─────────────┼────────────┘        │
-└────────────────────┼─────────────┼─────────────────────┘
+│       └────────────┼─────────────┼────────────┘       │
+└────────────────────┼─────────────┼────────────────────┘
                      │             │
-┌────────────────────▼─────────────▼─────────────────────┐
-│         π UNIVERSAL CLASSIFICATION LAYER                │
-│                                                          │
-│  ┌────────────────────────────────────────────────┐    │
-│  │  Multi-Stage Classifier                        │    │
-│  │  Stage 1: Domain Detection                     │    │
-│  │  Stage 2: Intent Classification                │    │
+┌────────────────────▼─────────────▼───────────────────┐
+│         UNIVERSAL CLASSIFICATION LAYER               │
+│                                                      │
+│  ┌────────────────────────────────────────────────┐  │
+│  │  Multi-Stage Classifier                        │  │
+│  │  Stage 1: Domain Detection                     │  │
+│  │  Stage 2: Intent Classification                │  │
 │  │  Stage 3: Entity Extraction                    │    │
 │  │  Stage 4: Canonical Type Mapping               │    │
 │  │  Stage 5: Response Generation                  │    │
 │  └────────────────────────────────────────────────┘    │
-│                                                          │
+│                                                        │
 │  ┌────────────────────────────────────────────────┐    │
 │  │  Context & Reasoning Engine                    │    │
 │  │  - Session management                          │    │
@@ -128,7 +128,7 @@
 
 ## Domain Plugins
 
-π uses **pluggable domain configurations**:
+The system uses **pluggable domain configurations**:
 
 ### Retail Domain
 ```yaml
@@ -287,13 +287,13 @@ Classification:
 ## Deployment Models
 
 ### Cloud Deployment (Hugging Face Spaces)
-- Shared π instance across all edge devices
+- Shared instance across all edge devices
 - Multi-tenant with store/user isolation
 - Global learning and optimization
 - Suitable for: SaaS, consumer products
 
-### Edge Deployment (Pi 5 / Server)
-- Local π instance per location/user
+### Edge Deployment (Local Server)
+- Local instance per location/user
 - Complete privacy and control
 - Works offline
 - Suitable for: Enterprise, privacy-critical
@@ -329,7 +329,7 @@ Classification:
 **Phase 1: Retail MVP** ✅
 - Domain: Retail
 - Entities: Products, Promos, Locations
-- Interface: Reachy Mini robot
+- Interface: Edge backend (any device)
 - Storage: SQLite
 
 **Phase 2: Universal Core** 🚧
@@ -356,9 +356,9 @@ Classification:
 
 **Traditional AI assistants are stateless chat interfaces.**
 
-**π is a persistent, structured intelligence layer.**
+**The Second Brain is a persistent, structured intelligence layer.**
 
-| Traditional AI | π Universal Second Brain |
+| Traditional AI | Universal Second Brain |
 |---------------|------------------------|
 | Chat logs | Structured knowledge |
 | No memory | Canonical entities |

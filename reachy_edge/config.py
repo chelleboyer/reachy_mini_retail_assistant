@@ -33,12 +33,12 @@ class Settings(BaseSettings):
     qdrant_url: str = "http://localhost:6333"
     qdrant_collection: str = "reachy_products"
 
-    # π (Second Brain) Integration
-    pi_url: str = "https://pi.example.com"
-    pi_api_key: str = "dev-key"
+    # Second Brain Integration
+    backend_url: str = "https://brain.example.com"
+    backend_api_key: str = "dev-key"
     event_batch_size: int = 50
     event_batch_interval_s: int = 5
-    pi_enabled: bool = False  # Set to True when π backend is ready
+    backend_enabled: bool = False  # Set to True when Second Brain backend is ready
     
     # Cache Configuration
     l2_db_path: str = "./data/cache.db"

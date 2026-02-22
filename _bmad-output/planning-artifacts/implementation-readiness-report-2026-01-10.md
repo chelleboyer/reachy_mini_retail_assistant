@@ -1,4 +1,4 @@
----
+﻿---
 stepsCompleted: [step-01-document-discovery, step-02-prd-analysis, step-03-epic-coverage-validation, step-04-ux-alignment, step-05-epic-quality-review, step-06-final-assessment]
 documents:
   prd: docs/PRD.md
@@ -14,7 +14,7 @@ gateDecision: PROCEED
 overallGrade: A+
 ---
 
-# Implementation Readiness Assessment - π Universal Second Brain
+# Implementation Readiness Assessment - Universal Second Brain
 
 **Project:** reachy-mini-retail-assistant  
 **Assessment Date:** January 10, 2026  
@@ -101,7 +101,7 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 
 ### Functional Requirements
 
-**Universal π Platform (12 FRs):**
+**Universal Platform (12 FRs):**
 
 - **FR1:** Multi-stage classification pipeline (Domain → Intent → Entity → Canonical → Response)
 - **FR2:** Universal canonical storage (entities, events, knowledge, tasks, content)
@@ -129,7 +129,7 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 - **FR21:** Selfie coordination tool (optional engagement)
 - **FR22:** Movement/gesture tool (point, wave, nod)
 - **FR23:** Fast LLM integration with cache-only prompts
-- **FR24:** Async event emission to π backend
+- **FR24:** Async event emission to backend
 - **FR25:** Cache sync protocol with incremental updates
 - **FR26:** Health and observability endpoints
 
@@ -152,7 +152,7 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 - **NFR2:** Fast path responses <500ms (cache-only queries)
 - **NFR3:** L1 cache hit <10ms
 - **NFR4:** L2 cache query <100ms
-- **NFR5:** π classification <200ms for cached patterns
+- **NFR5:** classification <200ms for cached patterns
 - **NFR6:** Cache sync latency <5s
 - **NFR7:** Knowledge graph query <100ms
 - **NFR8:** Sub-100ms classification for cached patterns
@@ -193,7 +193,7 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 **Scalability (3 NFRs):**
 
 - **NFR30:** Design for horizontal scaling from day 1
-- **NFR31:** Support multiple edge devices per π instance
+- **NFR31:** Support multiple edge devices per backend instance
 - **NFR32:** Efficient domain-filtered cache generation
 
 **Code Quality - CRITICAL (15 NFRs):**
@@ -221,8 +221,8 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 ### Additional Requirements
 
 **Technology Stack Constraints:**
-- π Backend: FastAPI for REST API
-- Edge Backend: FastAPI on Pi 5
+- Backend: FastAPI for REST API
+- Edge Backend: FastAPI on edge server
 - Storage: SQLite (edge/local), PostgreSQL (cloud/production)
 - Cache: In-memory LRU (L1) + SQLite FTS5 (L2)
 - LLM: OpenAI API (initial), Llama 3.2 3B (planned)
@@ -230,7 +230,7 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 
 **Deployment Models:**
 - Cloud deployment: Hugging Face Spaces (demo/SaaS)
-- Edge deployment: Pi 5 local (privacy/offline)
+- Edge deployment: edge server local (privacy/offline)
 - Hybrid deployment: Local + cloud sync (planned Phase 2)
 
 **Domain Plugin Structure:**
@@ -264,8 +264,8 @@ All required documents have been discovered and inventoried. Ready to proceed wi
 - **Success Metrics:** Clear DoD and validation criteria
 
 **Notable Features:**
-- Two-brain architecture (Edge + π) clearly explained
-- Requirements organized by layer (π platform vs edge implementation)
+- Two-brain architecture (Edge + Backend) clearly explained
+- Requirements organized by layer (backend platform vs edge implementation)
 - Code quality emphasized (15 NFRs dedicated to quality)
 - Privacy-first approach (no PII, no image storage)
 - Testability requirements embedded (replay system, evaluation)
@@ -287,18 +287,18 @@ The PRD demonstrates exceptional clarity and completeness, providing a solid fou
 
 | FR # | PRD Requirement | Epic Coverage | Status |
 |------|-----------------|---------------|--------|
-| **FR1** | Multi-stage classification pipeline (Domain → Intent → Entity → Canonical → Response) | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR2** | Universal canonical storage (entities, events, knowledge, tasks, content) | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR3** | Domain plugin system with YAML-based configurations | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR4** | Context and reasoning engine with session tracking | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR5** | Cache generation engine with domain-filtered snapshots | Epic 4 (Edge-π Sync) | ✅ Covered |
-| **FR6** | Event ingestion API for all edge devices | Epic 4 (Edge-π Sync) | ✅ Covered |
-| **FR7** | Classification explainability with confidence scoring | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR8** | Entity deduplication and resolution | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR9** | Knowledge graph with relationships | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR10** | Evaluation and replay system for classifier testing | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR11** | External data feed ingestion and normalization | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR12** | Multi-tenant support with isolation | Epic 4 (Edge-π Sync) | ✅ Covered |
+| **FR1** | Multi-stage classification pipeline (Domain → Intent → Entity → Canonical → Response) | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR2** | Universal canonical storage (entities, events, knowledge, tasks, content) | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR3** | Domain plugin system with YAML-based configurations | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR4** | Context and reasoning engine with session tracking | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR5** | Cache generation engine with domain-filtered snapshots | Epic 4 (Edge-Brain Sync) | ✅ Covered |
+| **FR6** | Event ingestion API for all edge devices | Epic 4 (Edge-Brain Sync) | ✅ Covered |
+| **FR7** | Classification explainability with confidence scoring | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR8** | Entity deduplication and resolution | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR9** | Knowledge graph with relationships | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR10** | Evaluation and replay system for classifier testing | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR11** | External data feed ingestion and normalization | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR12** | Multi-tenant support with isolation | Epic 4 (Edge-Brain Sync) | ✅ Covered |
 | **FR13** | Voice input and output (STT/TTS) | Epic 2 (Human Interface Layer) | ✅ Covered |
 | **FR14** | Natural language conversation with ≤35 word responses | Epic 2 (Human Interface Layer) | ✅ Covered |
 | **FR15** | Gesture coordination (head, arm pointing) | Epic 2 (Human Interface Layer) | ✅ Covered |
@@ -310,8 +310,8 @@ The PRD demonstrates exceptional clarity and completeness, providing a solid fou
 | **FR21** | Selfie coordination tool (optional engagement) | Epic 2 (Human Interface Layer) | ✅ Covered |
 | **FR22** | Movement/gesture tool (point, wave, nod) | Epic 2 (Human Interface Layer) | ✅ Covered |
 | **FR23** | Fast LLM integration with cache-only prompts | Epic 2 (Human Interface Layer) | ✅ Covered |
-| **FR24** | Async event emission to π backend | Epic 3 (π Intelligence Layer) | ✅ Covered |
-| **FR25** | Cache sync protocol with incremental updates | Epic 4 (Edge-π Sync) | ✅ Covered |
+| **FR24** | Async event emission to backend | Epic 3 (Intelligence Layer) | ✅ Covered |
+| **FR25** | Cache sync protocol with incremental updates | Epic 4 (Edge-Brain Sync) | ✅ Covered |
 | **FR26** | Health and observability endpoints | Epic 1 (Core Edge Engine) | ✅ Covered |
 | **FR27** | Deal promotion flow (greet + share 1-3 promos + offer location) | Epic 2 (Human Interface Layer) | ✅ Covered |
 | **FR28** | Wayfinding flow (query → cache lookup → gesture + directions) | Epic 2 (Human Interface Layer) | ✅ Covered |
@@ -359,8 +359,8 @@ All 47 Non-Functional Requirements are covered in Epic 5.
 |------|-------------|---------|------------------|
 | Epic 1: Core Edge Engine | 4 FRs (FR17, FR18, FR19, FR26) | 6 stories | 20-31 hours |
 | Epic 2: Human Interface Layer | 12 FRs (FR13-FR16, FR20-FR23, FR27-FR30) | 9 stories | 54-72 hours |
-| Epic 3: π Intelligence Layer | 10 FRs (FR1-FR4, FR7-FR11, FR24) | 10 stories | 77-96 hours |
-| Epic 4: Edge-π Sync | 4 FRs (FR5, FR6, FR12, FR25) | 4 stories | 34-42 hours |
+| Epic 3: Intelligence Layer | 10 FRs (FR1-FR4, FR7-FR11, FR24) | 10 stories | 77-96 hours |
+| Epic 4: Edge-Brain Sync | 4 FRs (FR5, FR6, FR12, FR25) | 4 stories | 34-42 hours |
 | Epic 5: Production Readiness | 47 NFRs (NFR1-NFR47) | 10 stories | 112-140 hours |
 | **TOTAL** | **30 FRs + 47 NFRs** | **39 stories** | **297-381 hours** |
 
@@ -373,7 +373,7 @@ All 47 Non-Functional Requirements are covered in Epic 5.
 **Strengths:**
 - **100% FR Coverage:** Every functional requirement mapped to specific epic and stories
 - **100% NFR Coverage:** All non-functional requirements addressed in Epic 5
-- **Logical Grouping:** Epics organized by architectural layer (Edge → Human Interface → π → Sync → Quality)
+- **Logical Grouping:** Epics organized by architectural layer (Edge → Human Interface → the backend → Sync → Quality)
 - **No Orphaned Requirements:** Every requirement has implementation path
 - **Clear Epic Boundaries:** No overlap or ambiguity in epic scope
 - **Sequential Dependencies:** Epic order enables incremental delivery
@@ -381,7 +381,7 @@ All 47 Non-Functional Requirements are covered in Epic 5.
 **Epic Flow Logic:**
 1. **Epic 1** builds minimal viable edge (HTTP API + cache) - proves architecture
 2. **Epic 2** adds human interface (voice + gestures) - complete user experience
-3. **Epic 3** implements π intelligence (classification + memory) - universal brain
+3. **Epic 3** implements backend intelligence (classification + memory) - universal brain
 4. **Epic 4** connects the two brains (sync protocol) - distributed architecture
 5. **Epic 5** ensures production quality (testing, observability) - production-ready
 
@@ -429,9 +429,9 @@ No formal UX design document found in planning artifacts.
 **Rationale:**
 This project is **API/backend-first** with tactical UI components, not a UX-heavy consumer application. The architecture appropriately addresses UI needs without formal UX documentation:
 
-1. **Demo UI (Gradio):** Simple, functional interface for π classification demonstration
+1. **Demo UI (Gradio):** Simple, functional interface for classification demonstration
 2. **Reachy Robot Interface:** Hardware-driven interaction (voice + gesture) with FSM-controlled flows
-3. **Focus on Backend Intelligence:** π universal brain is the product, interfaces are secondary
+3. **Focus on Backend Intelligence:** the universal brain is the product, interfaces are secondary
 
 **UI Components Are Specified:**
 - Voice I/O requirements (FR13: STT/TTS)
@@ -484,8 +484,8 @@ UX documentation absence is appropriate for this API/backend-focused project wit
 **Epic Distribution:**
 - Epic 1 (Core Edge Engine): 6 stories, 20-31 hours
 - Epic 2 (Human Interface): 9 stories, 54-72 hours
-- Epic 3 (π Intelligence): 10 stories, 77-96 hours
-- Epic 4 (Edge-π Sync): 4 stories, 34-42 hours
+- Epic 3 (Intelligence): 10 stories, 77-96 hours
+- Epic 4 (Edge-Brain Sync): 4 stories, 34-42 hours
 - Epic 5 (Production Readiness): 10 stories, 112-140 hours
 
 **Total Estimated Effort:** 297-381 hours
@@ -506,13 +506,13 @@ UX documentation absence is appropriate for this API/backend-focused project wit
 - Value: Natural voice conversations, gestures, engaging retail assistance
 - **Assessment: PASS** - Clear customer-facing value (robot interaction)
 
-✅ **Epic 3: π Intelligence Layer - Classification + Memory**
-- User Outcome: "π transforms unstructured conversations into searchable knowledge, enabling context-aware responses and cross-domain reasoning"
+✅ **Epic 3: Intelligence Layer - Classification + Memory**
+- User Outcome: "The system transforms unstructured conversations into searchable knowledge, enabling context-aware responses and cross-domain reasoning"
 - Value: Structured knowledge, context-aware responses, continuous learning
 - **Assessment: PASS** - Intelligence layer enabling smarter interactions
 
-✅ **Epic 4: Edge-π Sync - Distributed Architecture**
-- User Outcome: "Edge devices stay fast with local cache while π continuously learns and improves classification across all interactions"
+✅ **Epic 4: Edge-Brain Sync - Distributed Architecture**
+- User Outcome: "Edge devices stay fast with local cache while the backend continuously learns and improves classification across all interactions"
 - Value: Fast local performance + global learning (second brain architecture)
 - **Assessment: PASS** - User benefit (fast + improving system)
 
@@ -537,12 +537,12 @@ UX documentation absence is appropriate for this API/backend-focused project wit
 - **Assessment: PASS** - Epic 1 delivers standalone value before Epic 2
 
 ✅ **Epic 3 Independence**
-- Epic 3 (π backend) is completely independent of Epic 1-2
-- π can be built and tested standalone (classification, memory, knowledge graph)
+- Epic 3 (backend) is completely independent of Epic 1-2
+- the backend can be built and tested standalone (classification, memory, knowledge graph)
 - **Assessment: PASS** - No dependency on edge implementation
 
 ✅ **Epic 4 Dependency Structure**
-- Epic 4 requires both Epic 1-2 (edge) AND Epic 3 (π) to be functional
+- Epic 4 requires both Epic 1-2 (edge) AND Epic 3 (Backend) to be functional
 - **But**: Epic 4 is the integration epic (intentional connection point)
 - Epics 1-3 each deliver value independently before integration
 - **Assessment: PASS** - Appropriate dependency (integration epic)
@@ -556,7 +556,7 @@ UX documentation absence is appropriate for this API/backend-focused project wit
 ```
 Epic 1 (Edge API) ──┐
                     ├──> Epic 4 (Sync)
-Epic 3 (π Brain) ───┘
+Epic 3 (backend Brain) ───┘
 
 Epic 2 (Human Layer) ──> builds on Epic 1 (but Epic 1 standalone valuable)
 
@@ -657,7 +657,7 @@ Epic 5 (Quality) ──> applies to all epics (cross-cutting)
 - Format: Given/When/Then ✅
 - Specificity: Diff format, atomic sync, retry logic, version mismatch handling ✅
 - Performance: <5s sync target (NFR6) ✅
-- Testability: π ↔ edge integration test ✅
+- Testability: the backend ↔ edge integration test ✅
 
 ✅ **Story 5.3: Structured Logging**
 - Format: Given/When/Then ✅
@@ -731,7 +731,7 @@ Epic 5 (Quality) ──> applies to all epics (cross-cutting)
 1. Story 4.1: Cache generation (uses Epic 3 canonical storage)
 2. Story 4.2: Sync protocol (uses 4.1)
 3. Story 4.3: Multi-tenancy (cross-cutting, applies to 4.1-4.2)
-4. Story 4.4: Event emission (edge → π, uses Epic 3 ingestion API)
+4. Story 4.4: Event emission (edge → the backend, uses Epic 3 ingestion API)
 - **Assessment: PASS** - Logical integration sequence, no forward refs
 
 ✅ **Epic 5 Story Sequence:**
@@ -755,14 +755,14 @@ Epic 5 (Quality) ──> applies to all epics (cross-cutting)
 - **Timing:** 2nd story in Epic 1 (immediately after project setup)
 - **Assessment: PASS** - Database created early, used by subsequent stories
 
-✅ **π Backend Database (SQLite/PostgreSQL):**
+✅ **Backend Database (SQLite/PostgreSQL):**
 - **Story 3.1:** FastAPI backend setup (includes database modules)
 - **Story 3.5:** Universal canonical storage (events, entities tables)
 - **Story 3.6:** Knowledge graph (relationships table)
 - **Timing:** Foundation story (3.1), then storage layer (3.5-3.6)
 - **Assessment: PASS** - Database infrastructure early in Epic 3
 
-✅ **Cache Database on Edge (sync'd from π):**
+✅ **Cache Database on Edge (sync'd from the backend):**
 - **Story 4.2:** Incremental cache sync protocol (POST /cache/apply)
 - **Uses:** Epic 1's existing SQLite database (Story 1.2)
 - **Assessment: PASS** - Reuses existing database, no duplication
@@ -919,7 +919,7 @@ This project has passed all critical validation checkpoints and is production-re
    - Logical architectural progression (Edge → Human → Intelligence → Sync → Quality)
 
 3. **Architecture Excellence**
-   - Clean separation of concerns (2 backends: edge + π)
+   - Clean separation of concerns (2 backends: edge + backend)
    - Well-documented system architecture (C4 models, deployment diagrams)
    - Testability designed from foundation (Grade A from test-design-system.md)
    - Performance targets explicitly defined and traceable to NFRs
@@ -962,7 +962,7 @@ This project has passed all critical validation checkpoints and is production-re
    - **Testing:** Write unit tests as you go (per Story DoD requirements)
 
 3. **Set Up Development Environment**
-   - Configure Python 3.11+ environments (edge + π backends)
+   - Configure Python 3.11+ environments (edge + backends)
    - Install dependencies (FastAPI, SQLite, pytest, structlog, prometheus_client)
    - Set up CI/CD pipeline (GitHub Actions) with quality gates
 
@@ -977,11 +977,11 @@ This project has passed all critical validation checkpoints and is production-re
    - Milestone: Reachy can have natural conversations with customers
 
 3. **Epic 3 (Intelligence):** 77-96 hours
-   - Delivers: π backend with classification, memory, knowledge graph
+   - Delivers: backend with classification, memory, knowledge graph
    - Milestone: Universal intelligence layer operational
 
 4. **Epic 4 (Sync):** 34-42 hours
-   - Delivers: Edge ↔ π synchronization and distributed architecture
+   - Delivers: Edge ↔ the backend synchronization and distributed architecture
    - Milestone: Second brain architecture live
 
 5. **Epic 5 (Quality):** 112-140 hours (distributed throughout)

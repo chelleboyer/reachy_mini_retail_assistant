@@ -1,0 +1,26 @@
+[
+  {
+    "timestamp": "2026-02-22T03:09:00.945256",
+    "intent": "product_search",
+    "entity": "beef jerky",
+    "resolved": true,
+    "confidence": 0.95,
+    "sentiment": "positive"
+  },
+  {
+    "timestamp": "2026-02-22T03:12:09.951599",
+    "intent": "product_search",
+    "entity": "beef jerky",
+    "resolved": true,
+    "confidence": 0.95,
+    "sentiment": "positive"
+  },
+  {
+    "timestamp": "2026-02-22T03:12:31.267253",
+    "intent": "product_search",
+    "entity": "beef jerky",
+    "resolved": true,
+    "confidence": 0.95,
+    "sentiment": "positive"
+  }
+]

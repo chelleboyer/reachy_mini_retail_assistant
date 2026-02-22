@@ -84,7 +84,7 @@ class ProductLookupTool(Tool):
                         "zone_id": deps.zone_id,
                         "metadata": {
                             "sku": products[0].sku,
-                            "aisle": products[0].aisle,
+                            "location": products[0].location,
                             "result_count": len(products),
                             "cache_hit": cache_hit,
                         },
@@ -110,4 +110,4 @@ class ProductLookupTool(Tool):
     @staticmethod
     def _format_response(product: any) -> str:
         """Format product location response under 35 words."""
-        return f"{product.name} is in aisle {product.aisle}. Check the {product.category} section there."
+        return f"{product.name} is at {product.location}. Check the {product.category} section there."

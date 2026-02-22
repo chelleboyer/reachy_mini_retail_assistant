@@ -1,511 +1,441 @@
-# 🤖 π (Pi) Universal Second Brain - Reachy Mini Retail Assistant
+﻿# Retail Assistant
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.109+-green.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **A domain-agnostic intelligence layer for AI assistants**  
-> Initial implementation: Voice-enabled retail assistant with Reachy Mini robot
+A **retail assistant** with fast product lookup and promotion delivery. Customers query via text (or voice when integrated); the system replies with product locations and active promotions in under one second.
 
-π transforms unstructured interactions into structured, searchable knowledge using multi-stage classification. Think **Logseq meets RAG meets Zapier** - automatic classification, canonical storage, cross-domain reasoning.
+Designed as a foundation for a **Universal Second Brain** — a domain-agnostic classification and memory engine that can be reused across retail, personal productivity, business automation, and research contexts.
 
----
-
-## 🎯 What is This?
-
-**Not just a retail assistant. Not just a chatbot. A universal intelligence layer.**
-
-- **Edge Component (Reachy Mini)**: Fast, voice-enabled retail assistant with 2-tier cache architecture
-- **π Backend**: Universal classification engine that learns and reasons across domains
-- **Domain Plugins**: Configurable YAML-based domain adapters (retail, personal, business, research)
-
-### Initial Use Case: Retail Assistance
-
-- **Voice interaction**: Natural language product search and wayfinding
-- **Expressive movements**: Head nodding, body rotation, motorized antenna gestures
-- **Promotion awareness**: Active deal recommendations
-- **Fast responses**: <2s end-to-end, <100ms cache lookups
-- **Offline-capable**: Full functionality without backend (cache-only mode)
-
-> **Note**: Reachy Mini is a desktop robot with a 6-DoF head, rotating body, and LED antennas - **no arms or physical manipulation**. See [REACHY-MINI-HARDWARE.md](docs/REACHY-MINI-HARDWARE.md) for full capabilities.
+> Deployment-agnostic: runs on any machine — cloud, local workstation, edge device. Hardware integration (robot gestures, camera, etc.) is pluggable via the tool system.
 
 ---
 
-## 🚀 Quick Start
+## Intent
 
-### Prerequisites
+### Problem
 
-- Python 3.11+
-- FastAPI 0.109+
-- SQLite 3 (included with Python)
+Retail customers ask basic "where is X?" and "what is on sale?" questions that pull staff away from higher-value work. Static digital signage cannot answer queries. Robotic alternatives have historically been slow, scripted, or expensive.
 
-### Setup
+### Solution
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/chelleboyer/reachy_mini_retail_assistant.git
-   cd reachy-mini-retail-assistant
-   ```
+An always-on kiosk that:
 
-2. **Set up virtual environment**
-   ```bash
-   cd reachy_edge
-   python -m venv venv
-   
-   # Windows
-   .\venv\Scripts\activate
-   
-   # Linux/Mac
-   source venv/bin/activate
-   ```
+1. Listens for a customer query (voice  text).
+2. Classifies intent with a rule-based classifier (MVP) or LLM.
+3. Looks up the answer from a warm local cache in <100 ms.
+4. Returns the response (with optional TTS / gesture integration).
+5. Emits a structured event to the backend for analytics and learning.
 
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### Design Principles
 
-4. **Run the application**
-   ```bash
-   uvicorn main:app --reload
-   ```
-
-5. **Verify health endpoint**
-   ```bash
-   curl http://localhost:8000/health
-   ```
-
-   Expected response:
-   ```json
-   {
-     "status": "healthy",
-     "timestamp": "2026-01-10T12:34:56.789Z",
-     "version": "0.1.0"
-   }
-   ```
+| Principle | Implementation |
+|-----------|---------------|
+| **Fast-first** | 2-tier cache; LLM only as fallback |
+| **Offline-capable** | Full functionality with no network; backend sync is opportunistic |
+| **Short responses** | `max_response_words=35` keeps TTS natural |
+| **Explainable** | Every response records `intent`, `tool_used`, `cache_hit`, `latency_ms` |
+| **Domain-agnostic core** | Backend classification pipeline works for any structured knowledge domain |
 
 ---
 
-## 🧪 Testing
+## Architecture
 
-Run the test suite:
-
-```bash
-cd reachy_edge
-python -m pytest tests/ -v
 ```
 
-Run specific test file:
+                    Reachy Mini (Pi 5)                      
+                                                            
+  Microphone  STT  /interact  ProductLookupTool      
+                                                           
+                                 PromoManagerTool        
+                                                           
+                                 SelfieTool / Movement   
+                                                            
+   Tool reads:  L1Cache (RAM)  L2Cache (SQLite FTS5)    
+                                                            
+   Tool writes: EventEmitter  p Backend (HTTP batch)    
+                                                            
+  Response  PromptManager  LLMInference  TTS  Speaker  
 
-```bash
-python -m pytest tests/test_main.py -v
-python -m pytest tests/test_l2_cache.py -v
+                            async batch (optional)
+                          
+          
+                p Backend (cloud)    
+            /events/batch              receives telemetry
+            /cache/sync                pushes product/promo updates
+            CanonicalStore (SQLite)  
+            KnowledgeGraph           
+          
 ```
 
-**Current Test Coverage:**
-- ✅ Health endpoint (200 status, correct schema, ISO 8601 timestamp, version)
-- ✅ FastAPI application startup
-- ✅ L2 cache (SQLite FTS5 product search) - 97% coverage, 17/17 tests passing
-- 🚧 LLM integration tests (in progress)
+### Request Flow
+
+```
+Customer query
+      
+      
+_classify_intent()        rule-based keyword match (MVP)
+                          returns: product_lookup | promo | selfie
+      
+InteractionStateMachine   IDLE  LISTEN  PROCESS  RESPOND  IDLE
+      
+      
+tool.execute(query, deps)
+        L1 hit?   return immediately
+        L1 miss?  search L2 (SQLite FTS5)  cache top result in L1
+      
+EventEmitter.emit()       async; batched; no-op if p disabled
+      
+      
+InteractionResponse       response text, intent, tool, latency_ms, cache_hit
+```
 
 ---
 
-## 💾 L2 Cache - Product Storage & Search
+## Repository Layout
 
-### Overview
+```
+reachy_mini_retail_assistant/
 
-The L2 cache uses **SQLite FTS5** (Full-Text Search 5) for fast, persistent product storage with relevance ranking.
+ reachy_edge/              # Edge service — runs anywhere (cloud, local, edge device)
+    main.py               # FastAPI app: lifespan, /health, /interact, /cache/sync
+    config.py             # Pydantic Settings (env vars / .env)
+    models/
+       events.py         # EventType enum + event payload schemas
+       interaction.py    # InteractionRequest / InteractionResponse
+    cache/
+       l1_cache.py       # In-memory LRU with TTL + thread-safe locking
+       l2_cache.py       # SQLite FTS5 ProductCache + async L2Cache facade
+       schemas.py        # Product, Promo, CacheSyncPayload schemas
+    fsm/
+       interaction_fsm.py  # 4-state FSM: IDLE / LISTEN / PROCESS / RESPOND
+    llm/
+       inference.py      # LLMInference: OpenAI wrapper (local GGUF planned)
+       client.py         # Low-level HTTP helpers
+       prompt_manager.py # Prompt templates + word-count enforcement
+    tools/
+       base.py           # Tool ABC, ToolDependencies dataclass, ToolResult
+       product_lookup.py # FTS5 search; L1L2 fallback; emits events
+       promo_manager.py  # Active promotions lookup
+       movement.py       # Stub: gestures/direction to MovementManager
+       selfie.py         # Camera capture engagement feature
+    brain_client/
+       event_emitter.py  # Async batched HTTP POST to Second Brain backend
+    voice/
+       stt.py            # Speech-to-text
+       tts.py            # Text-to-speech
+    data/
+       sample_products.py  # 44 truck-stop product definitions
+    scripts/
+       load_products.py  # CLI: seed SQLite DB from sample data
+    tests/
+        test_main.py      # Health endpoint, app startup
+        test_cache.py     # L1 cache unit tests
+        test_l2_cache.py  # FTS5 tests (17 tests, 97% coverage)
+        test_tools.py     # Tool integration tests
 
-**Features:**
-- **Full-text search** across SKU, name, category, location, and description
-- **BM25 ranking** for relevance-scored results
-- **Porter stemming** for better search quality (e.g., "truck" matches "trucker")
-- **Fast performance**: <100ms search latency (NFR4)
-- **Truck stop products**: 44 realistic products across 8 categories
+ backend/                  # Second Brain Cloud Backend
+    main.py               # FastAPI: /health, /events/batch, /cache/sync
+    config.py             # Backend service settings
+    models.py             # BatchEventsRequest / BatchEventsResponse
+    db/
+       canonical_store.py  # save_event()  SQLite
+       knowledge_graph.py  # Entity relationship graph
+       vector_store.py     # Embedding storage (stub)
+    cache/
+        generator.py      # Builds CacheSyncPayload for edge pull
 
-### Database Schema
+ demo/                     # Standalone Gradio demo (no hardware needed)
+    gradio_app.py
+    requirements.txt
+
+ docs/                     # Reference documentation
+     PRD.md
+     UNIVERSAL-ARCHITECTURE.md
+     success-metrics.md
+```
+
+---
+
+## Key Modules
+
+### `reachy_edge/main.py`  FastAPI Application
+
+Uses FastAPI's `lifespan` context manager for clean init/teardown.
+
+**Startup:** creates L2Cache  L1Cache  EventEmitter  LLMInference  PromptManager  FSM  tools dict. Then preloads L1 from L2 and starts the event emitter background task.
+
+**Endpoints:**
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| GET | `/` | Service identity (reachy_id, store_id, zone_id) |
+| GET | `/health` | Liveness + L1/L2/LLM stats |
+| POST | `/interact` | Main customer interaction |
+| POST | `/cache/sync` | Receive product/promo updates from backend |
+
+**Rule-based intent classifier:**
+```python
+# Keywords  intent
+"where" / "find" / "looking for" / "location"    product_lookup
+"deal"  / "sale" / "promo" / "discount"           promo
+"selfie"/ "picture"/ "photo"                      selfie
+# fallback                                         product_lookup
+```
+
+---
+
+### `reachy_edge/cache/l1_cache.py`  In-Memory LRU Cache
+
+Thread-safe dict with per-entry TTL and LRU eviction via `threading.Lock`.
+
+- **`get(key)`**  returns `None` on miss or expiry; updates `last_access`.
+- **`set(key, value)`**  evicts LRU entry when at `max_size`.
+- **`invalidate(key=None)`** → clears one key or entire cache (called after backend sync).
+- **`stats()`**  returns `{size, max_size, hits, misses, hit_rate_pct}`.
+
+Defaults: `max_size=1000`, `ttl_seconds=300`.
+
+---
+
+### `reachy_edge/cache/l2_cache.py`  SQLite FTS5 Persistent Cache
+
+`ProductCache` wraps a SQLite FTS5 virtual table:
 
 ```sql
 CREATE VIRTUAL TABLE products_fts USING fts5(
-    sku,              -- Product SKU (searchable)
-    name,             -- Product name (searchable)
-    category,         -- Product category (searchable)
-    location,         -- Store location (searchable)
-    price UNINDEXED,  -- Price in USD (not searchable)
-    description,      -- Full description (searchable)
-    tokenize='porter unicode61'  -- Stemming & Unicode support
+    sku, name, category, location,
+    price UNINDEXED,          -- not searched
+    description,
+    tokenize='porter unicode61'   -- stemming + Unicode
 );
 ```
 
-### Product Categories
+Searches use BM25 ranking via FTS5's built-in `rank` column.
 
-- **Fuel & Fluids**: Diesel, DEF, motor oil, coolant, windshield washer
-- **Trucker Supplies**: Logbooks, straps, bungee cords, mud flaps, chains
-- **Electronics**: CB radios, GPS units, dash cams, phone chargers, headsets
-- **Energy & Snacks**: Coffee, energy drinks, beef jerky, trail mix, protein bars
-- **Hot Food**: Pizza, burgers, chicken tenders, breakfast sandwiches
-- **Services**: Showers, laundry, truck wash, reserved parking
-- **Safety & Lighting**: LED flares, safety vests, flashlights, emergency kits
-- **Convenience**: Sunglasses, hygiene products, OTC meds, oral care
+`L2Cache` is an async facade used by the app:
+- `search_products(query, max_results)`  FTS5 MATCH + BM25 sort.
+- `preload_hot_data(l1_cache)`  warms L1 on boot.
+- `update_products(products)` / `update_promos(promos)`  applied on sync.
+- `stats()`  exposes counts and cache version for `/health`.
 
-### Loading Sample Data
+---
+
+### `reachy_edge/fsm/interaction_fsm.py`  Interaction State Machine
+
+```
+IDLE begin() LISTEN processing() PROCESS responding() RESPOND
+                                                                        
+  reset() 
+```
+
+FSM state appears in every `InteractionResponse.metadata.state` for debugging.
+
+---
+
+### `reachy_edge/tools/`  Tool System
+
+All tools inherit from `Tool` (ABC in `base.py`) and receive `ToolDependencies`:
+
+```python
+@dataclass
+class ToolDependencies:
+    l1_cache: L1Cache
+    l2_cache: L2Cache
+    event_emitter: EventEmitter
+    movement_manager: Any | None   # None until Epic 2 hardware SDK integration
+    reachy_id: str
+    store_id: str
+    zone_id: str
+```
+
+**`ProductLookupTool`**
+1. L1 hit  return immediately.
+2. L1 miss  `l2_cache.search_products()`  cache top result in L1.
+3. Exact SKU matches sorted first regardless of BM25 score.
+4. Emits `CACHE_HIT` or `PRODUCT_QUERY` event.
+
+**`MovementTool`**  Stub: logs gesture/direction. Will delegate to hardware SDK in Epic 2.
+
+**`SelfieTool`**  Camera capture for engagement photos.
+
+---
+
+### `reachy_edge/llm/inference.py`  LLM Integration
+
+`LLMInference` supports two modes (configured via `Settings.llm_mode`):
+
+| Mode | Backend |
+|------|---------|
+| `"openai"` | `openai.OpenAI`  `gpt-4.1-mini` by default |
+| `"local"` | TODO  llama.cpp / GGUF planned |
+
+`PromptManager` caps system prompts to `max_response_words=35` for short TTS output.
+
+Latency exceeding `timeout_s` logs a warning but does **not** abort  the caller decides whether to use a cached fallback.
+
+---
+
+### `reachy_edge/brain_client/event_emitter.py` — Async Event Pipeline
+
+Background `worker()` coroutine drains an `asyncio.Queue`:
+
+- Batches up to `batch_size` events (default 50) or `batch_interval_s` seconds (default 5).
+- POSTs to `{backend_url}/events/batch` with `x-api-key` header.
+- `backend_enabled=False` (default in development) is a zero-overhead no-op.
+- `flush()` called on shutdown drains any remaining events.
+- `stats()` reports `events_sent` / `events_failed` to `/health`.
+
+---
+
+### `backend/main.py` — Second Brain Cloud Service
+
+Three endpoints:
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /health` | Liveness check |
+| `POST /events/batch` | Persists each event to `CanonicalStore` (SQLite) |
+| `GET /cache/sync` | Returns `CacheSyncPayload` (products + promos) for edge |
+
+`KnowledgeGraph` and `vector_store` are stubs for Epic 3.
+
+---
+
+## Quick Start
 
 ```bash
 cd reachy_edge
+python -m venv venv
+
+# Windows
+.\venv\Scripts\activate
+# macOS / Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+# Seed the SQLite product database (44 truck-stop products)
 python scripts/load_products.py
 
-# Or specify custom database path
-python scripts/load_products.py --db-path ./custom/path/products.db
+# Start the edge server
+uvicorn reachy_edge.main:app --reload
 ```
 
-Expected output:
-```
-✅ Successfully loaded 44 products into ./data/cache.db
+Verify:
+```bash
+curl http://localhost:8000/health
 
-Test query example:
-  Results for 'diesel': 5 products
-```
-
-### FTS5 Query Examples
-
-```python
-from cache.l2_cache import ProductCache
-
-cache = ProductCache()
-cache.initialize()
-
-# Single-word search
-results = cache.search_products("diesel", max_results=5)
-# Returns: Premium Diesel Fuel, BlueDEF, Shell Rotella Oil, etc.
-
-# Multi-word search (AND query)
-results = cache.search_products("CB radio")
-# Returns: Cobra 29 LX CB Radio
-
-# Category search
-results = cache.search_products("electronics")
-# Returns: CB radios, GPS units, dash cams, chargers, headsets
-
-# Service search
-results = cache.search_products("shower")
-# Returns: Shower Credit - 30 Minutes
-
-# Description keyword search
-results = cache.search_products("DOT compliant")
-# Returns: Simplified Logbook for Truck Drivers
-
-# Phrase search (exact match)
-results = cache.search_products('"truck stop"')
-# Returns: Products with exact phrase "truck stop"
+curl -X POST http://localhost:8000/interact \
+  -H "Content-Type: application/json" \
+  -d '{"query":"where is the diesel?","session_id":"test-1"}'
 ```
 
-### Python API
-
-```python
-from cache.l2_cache import ProductCache, ThreadSafeProductCache
-from models import Product
-
-# Initialize cache
-cache = ProductCache(db_path="./data/cache.db")
-cache.initialize()
-
-# Insert single product
-product = Product(
-    sku="FUEL-DIESEL-001",
-    name="Premium Diesel Fuel",
-    category="Fuel & Fluids",
-    location="Fuel Island 1",
-    price=3.89,
-    description="Ultra-low sulfur diesel"
-)
-cache.insert_product(product)
-
-# Bulk insert
-products = [product1, product2, product3]
-cache.insert_products(products)
-
-# Search with relevance scores
-results = cache.search_products("diesel fuel", max_results=5)
-for result in results:
-    print(f"{result.name} - ${result.price} - Score: {result.relevance_score}")
-
-# Close connection when done
-cache.close()
-
-# Or use context manager (auto-close)
-with ProductCache() as cache:
-    cache.initialize()
-    results = cache.search_products("CB radio")
-```
-
-#### Thread-Safe Usage (Multi-threaded Apps)
-
-For multi-threaded applications like FastAPI with multiple workers:
-
-```python
-from cache.l2_cache import ThreadSafeProductCache
-
-# Shared cache instance across threads (each thread gets own connection)
-cache = ThreadSafeProductCache("./data/cache.db")
-cache.initialize()
-
-# Use from any thread - automatically creates thread-local connection
-results = cache.search_products("diesel")
-
-# Or use FastAPI dependency injection (recommended)
-from fastapi import Depends
-
-def get_cache():
-    """Provide request-scoped ProductCache."""
-    cache = ProductCache("./data/cache.db")
-    try:
-        yield cache
-    finally:
-        cache.close()
-
-@app.get("/products/search")
-async def search(query: str, cache: ProductCache = Depends(get_cache)):
-    return cache.search_products(query)
-```
-
-# Insert single product
-product = Product(
-    sku="FUEL-DIESEL-001",
-    name="Premium Diesel Fuel",
-    category="Fuel & Fluids",
-    location="Fuel Island 1",
-    price=3.89,
-    description="Ultra-low sulfur diesel"
-)
-cache.insert_product(product)
-
-# Bulk insert
-products = [product1, product2, product3]
-cache.insert_products(products)
-
-# Search with relevance scores
-results = cache.search_products("diesel fuel", max_results=5)
-for result in results:
-    print(f"{result.name} - ${result.price} - Score: {result.relevance_score}")
-
-# Close connection when done
-cache.close()
-
-# Or use context manager (auto-close)
-with ProductCache() as cache:
-    cache.initialize()
-    results = cache.search_products("CB radio")
-```
-
----
-
-## 📁 Project Structure
-
-```
-reachy-mini-retail-assistant/
-├── reachy_edge/              # Edge component (FastAPI backend)
-│   ├── main.py               # FastAPI application entry point
-│   ├── config.py             # Environment-based configuration
-│   ├── models/               # Pydantic data models
-│   │   ├── __init__.py       # HealthResponse, API schemas
-│   │   ├── events.py         # Event models for π backend
-│   │   └── interaction.py    # Interaction state models
-│   ├── cache/                # 2-tier cache system
-│   │   ├── l1_cache.py       # L1: In-memory LRU cache
-│   │   ├── l2_cache.py       # L2: SQLite FTS5 cache
-│   │   └── schemas.py        # Cache data schemas
-│   ├── llm/                  # LLM integration
-│   │   ├── inference.py      # LLM inference with caching
-│   │   └── prompt_manager.py # Cache-only prompt templates
-│   ├── tools/                # Assistant tools
-│   │   ├── product_lookup.py # Product search by name/SKU
-│   │   ├── promo_manager.py  # Active promotions
-│   │   ├── movement.py       # Head/body orientation, antenna control
-│   │   └── selfie.py         # Optional engagement
-│   ├── pi_client/            # π backend integration
-│   │   └── event_emitter.py  # Async event emission
-│   ├── tests/                # Test suite
-│   │   ├── test_main.py      # Health endpoint tests
-│   │   ├── test_cache.py     # Cache layer tests
-│   │   └── test_tools.py     # Tool integration tests
-│   └── requirements.txt      # Python dependencies
-│
-├── pi_space/                 # π Universal Backend (future)
-│   ├── app.py                # Classification pipeline
-│   └── README_HF.md          # Hugging Face deployment guide
-│
-├── docs/                     # Documentation
-│   ├── PRD.md                # Product Requirements Document
-│   ├── UNIVERSAL-ARCHITECTURE.md  # System architecture
-│   ├── deployment-architecture.md # Deployment guide
-│   └── success-metrics.md    # KPIs and measurement
-│
-├── _bmad-output/             # Planning artifacts
-│   ├── planning-artifacts/
-│   │   ├── epics.md          # 5 epics, 39 stories
-│   │   ├── sprint-status.yaml # Sprint tracking
-│   │   └── test-design-system.md # Test strategy
-│   └── implementation-artifacts/
-│       └── stories/          # Detailed story files
-│
-└── _bmad/                    # BMAD workflow framework
-    ├── bmm/                  # Build-Measure-Method workflows
-    └── cis/                  # Creative Innovation Suite
-```
-
----
-
-## 📊 Development Status
-
-**Phase**: Sprint 1 - Epic 1 (Core Edge Engine)
-
-| Epic | Stories | Status | Description |
-|------|---------|--------|-------------|
-| **Epic 1: Core Edge Engine** | 6 | 🟡 In Progress | Minimal viable edge with 2-tier cache |
-| Epic 2: Human Interface Layer | 9 | ⚪ Planned | Voice, gestures, LLM integration |
-| Epic 3: π Intelligence Layer | 10 | ⚪ Planned | Classification engine, canonical storage |
-| Epic 4: Integration & Deployment | 8 | ⚪ Planned | Sync protocol, monitoring, deployment |
-| Epic 5: Enhancement & Scale | 6 | ⚪ Planned | Analytics, multi-store, plugins |
-
-**Current Story**: [Story 1.1 - FastAPI Project Setup](/_bmad-output/implementation-artifacts/stories/1-1-fastapi-project-setup-with-basic-health-endpoint.md) ✅ **COMPLETE**
-
-**Next Story**: Story 1.2 - L2 Cache (SQLite FTS5 Product Storage)
-
----
-
-## 🏗️ Architecture Overview
-
-### Edge Component (Reachy Mini)
-
-**2-Tier Cache Architecture:**
-- **L1 Cache**: In-memory LRU (≤1MB) - Hot products, active promos (99.9% hit rate target)
-- **L2 Cache**: SQLite FTS5 (≤100MB) - Full product catalog, store config (<100ms lookup)
-
-**Design Principles:**
-- **Fast-first**: Cache-only responses, no blocking I/O
-- **Offline-capable**: Full functionality without backend
-- **Event-driven**: Async π backend integration
-- **Testable**: High test coverage, comprehensive NFR validation
-
-### π Backend (Future - Epic 3)
-
-**Multi-Stage Classification Pipeline:**
-1. **Domain Classification**: Which domain handles this? (retail, personal, etc.)
-2. **Intent Classification**: What action is requested?
-3. **Entity Extraction**: What are the key entities?
-4. **Canonical Mapping**: Store in universal format
-5. **Response Generation**: Context-aware answers
-
----
-
-## 🔧 Configuration
-
-Copy `.env.example` to `.env` and configure:
+### Tests
 
 ```bash
-# Environment
-ENVIRONMENT=development
-
-# API Configuration
-API_VERSION=0.1.0
-LOG_LEVEL=INFO
-
-# Cache Configuration (Future - Story 1.2+)
-L1_CACHE_SIZE_MB=1
-L2_CACHE_SIZE_MB=100
-
-# π Backend (Future - Epic 3)
-PI_BACKEND_URL=https://api.pi-brain.com
-PI_API_KEY=your-api-key-here
+python -m pytest tests/ -v
 ```
 
----
-
-## 🧑‍💻 Development Workflow
-
-This project uses the **BMAD** (Build-Measure-Analyze-Deploy) workflow framework:
-
-1. **Planning Phase**: PRD → Architecture → Epics → Stories
-2. **Implementation**: Story-driven development with clear acceptance criteria
-3. **Testing**: Unit tests + Integration tests + NFR validation
-4. **Review**: Code review + Retrospectives
-
-### Key Workflows
-
-- **Sprint Planning**: Create sprint-status.yaml, plan story sequence
-- **Story Creation**: Generate detailed story files with dev notes
-- **Implementation**: Dev agent implements story, updates status
-- **Code Review**: Fresh context review with adversarial prompts
-- **Retrospective**: Capture learnings, update patterns
-
-See [_bmad/bmm/workflows/](_bmad/bmm/workflows/) for detailed workflow guides.
+Coverage: health endpoint, L1 cache, L2 FTS5 (97%), tool integration.
 
 ---
 
-## 📈 Non-Functional Requirements (NFRs)
+## Configuration Reference
 
-| ID | Requirement | Target | Status |
-|----|-------------|--------|--------|
-| NFR1 | Voice interaction end-to-end | <2s | 🚧 Planned |
-| NFR2 | LLM response generation | <500ms | 🚧 Planned |
-| NFR4 | L2 cache product search | <100ms | 🚧 Story 1.2 |
-| NFR5 | L1 cache hot product lookup | <10ms | 🚧 Story 1.4 |
-| NFR6 | L1 cache hit rate | 99.9% | 🚧 Story 1.4 |
-| NFR8 | Edge device uptime | 99.5% | 🚧 Epic 4 |
-| NFR10 | Conversation flow smoothness | <200ms gaps | 🚧 Epic 2 |
+Settings live in `reachy_edge/config.py` and are read from environment variables or `.env`.
 
----
-
-## 🤝 Contributing
-
-This project is currently in active development. Contributions welcome after Sprint 1 completion.
-
-**How to contribute:**
-1. Read [docs/PRD.md](docs/PRD.md) for product context
-2. Check [_bmad-output/planning-artifacts/sprint-status.yaml](_bmad-output/planning-artifacts/sprint-status.yaml) for current status
-3. Follow BMAD workflow for story-driven development
-4. Ensure tests pass and NFRs are validated
-
----
-
-## 📚 Documentation
-
-- **[Product Requirements Document](docs/PRD.md)**: Full vision, goals, requirements
-- **[Architecture](docs/UNIVERSAL-ARCHITECTURE.md)**: System design, patterns, decisions
-- **[Epic Breakdown](_bmad-output/planning-artifacts/epics.md)**: All 39 stories with acceptance criteria
-- **[Test Design](_bmad-output/planning-artifacts/test-design-system.md)**: Testing strategy, NFR coverage
-- **[Story Files](_bmad-output/implementation-artifacts/stories/)**: Detailed implementation guides
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REACHY_ID` | `RCH-DEV-001` | Instance identifier |
+| `STORE_ID` | `STORE-DEV` | Store identifier |
+| `ZONE_ID` | `ENTRANCE` | Zone within store |
+| `LLM_MODE` | `openai` | `openai` or `local` |
+| `OPENAI_API_KEY` | *(none)* | Required when `LLM_MODE=openai` |
+| `INFERENCE_MODEL` | `gpt-4.1-mini` | Chat completion model |
+| `EMBEDDING_MODEL` | `text-embedding-3-small` | Embedding model (Epic 3) |
+| `L2_BACKEND` | `sqlite` | `sqlite` or `qdrant` (Qdrant: Epic 3) |
+| `L2_DB_PATH` | `./data/cache.db` | SQLite file path |
+| `L1_TTL_SECONDS` | `300` | L1 entry lifetime in seconds |
+| `L1_MAX_SIZE` | `1000` | Max number of L1 entries |
+| `MAX_RESPONSE_WORDS` | `35` | Caps TTS response length |
+| `TIMEOUT_S` | `1.0` | LLM latency warning threshold |
+| `BACKEND_ENABLED` | `false` | Enable Second Brain backend emission |
+| `BACKEND_URL` | `https://brain.example.com` | Second Brain backend base URL |
+| `EVENT_BATCH_SIZE` | `50` | Events per HTTP POST to backend |
+| `EVENT_BATCH_INTERVAL_S` | `5` | Max seconds between flushes |
 
 ---
 
-## 📝 License
+## Development Status
 
-MIT License - See [LICENSE](LICENSE) for details
+| Epic | Focus | Status |
+|------|-------|--------|
+| **Epic 1  Core Edge Engine** | FastAPI + 2-tier cache + tool skeleton |  In Progress |
+| Epic 2  Human Interface | STT/TTS + robot gesture SDK integration |  Planned |
+| Epic 3  Second Brain Intelligence Layer | Classification pipeline + embeddings + Qdrant |  Planned |
+| Epic 4  Integration & Deployment | Sync protocol + monitoring + deploy |  Planned |
+| Epic 5  Enhancement & Scale | Analytics + multi-store + domain plugins |  Planned |
 
----
+**Non-Functional Requirements:**
 
-## 🙏 Acknowledgments
-
-Built with:
-- **[FastAPI](https://fastapi.tiangolo.com/)**: High-performance async web framework
-- **[Pydantic](https://pydantic.dev/)**: Data validation and settings management
-- **[SQLite FTS5](https://www.sqlite.org/fts5.html)**: Full-text search engine
-- **[structlog](https://www.structlog.org/)**: Structured logging
-- **[pytest](https://pytest.org/)**: Testing framework
-
-Inspired by:
-- **Reachy**: Open-source expressive humanoid robot platform
-- **Logseq**: Local-first knowledge management
-- **Ray Serve**: Fast model serving
-- **Zapier**: Workflow automation
-
----
-
-## 📧 Contact
-
-- **GitHub**: [@chelleboyer](https://github.com/chelleboyer)
-- **Project**: [reachy_mini_retail_assistant](https://github.com/chelleboyer/reachy_mini_retail_assistant)
+| NFR | Target | Notes |
+|-----|--------|-------|
+| End-to-end voice response | < 2 s | Epic 2 |
+| LLM response | < 500 ms | |
+| L2 cache search | < 100 ms | FTS5 BM25; target met in tests |
+| L1 cache lookup | < 10 ms | In-memory |
+| L1 cache hit rate |  99.9% | After warm-up |
+| Edge uptime |  99.5% | Epic 4 |
 
 ---
 
-**Status**: 🚧 Sprint 1 in progress - Story 1.1 complete (1/39 stories)  
-**Last Updated**: January 10, 2026
+## Sample Product Dataset (Truck Stop)
+
+44 products across 8 categories in `reachy_edge/data/sample_products.py`, loaded with `scripts/load_products.py`:
+
+| Category | Examples |
+|----------|---------|
+| Fuel & Fluids | Premium Diesel, BlueDEF, Shell Rotella |
+| Trucker Supplies | Logbooks, load straps, bungee cords, mud flaps |
+| Electronics | Cobra CB radio, Garmin GPS, dash cam |
+| Energy & Snacks | Coffee, energy drinks, beef jerky |
+| Hot Food | Pizza, burgers, chicken tenders |
+| Services | Shower credits, truck wash, reserved parking |
+| Safety & Lighting | LED flares, safety vests, emergency kit |
+| Convenience | Sunglasses, OTC meds, hygiene products |
+
+---
+
+## Documentation
+
+| File | Content |
+|------|---------|
+| [docs/PRD.md](docs/PRD.md) | Full product vision, goals, non-goals |
+| [docs/UNIVERSAL-ARCHITECTURE.md](docs/UNIVERSAL-ARCHITECTURE.md) | System design, multi-domain vision |
+| [docs/success-metrics.md](docs/success-metrics.md) | KPIs and measurement approach |
+| [_bmad-output/planning-artifacts/epics.md](_bmad-output/planning-artifacts/epics.md) | 5 epics, 39 stories with acceptance criteria |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Web framework | FastAPI 0.109+ / Pydantic v2 |
+| Persistent search | SQLite FTS5 (BM25, Porter stemming) |
+| In-memory cache | Python dict + `threading.Lock` |
+| LLM | OpenAI `gpt-4.1-mini` / local GGUF (planned) |
+| Embeddings | `text-embedding-3-small` (Epic 3) |
+| Vector store | Qdrant (Epic 3); SQLite FTS5 for MVP |
+| Logging | structlog  JSON, ISO timestamps |
+| Settings | pydantic-settings  env vars + `.env` |
+| Testing | pytest + pytest-asyncio |
+| Robot SDK | Pluggable hardware integration (Epic 2) |
+
+---
+
+## License
+
+MIT  see [LICENSE](LICENSE).

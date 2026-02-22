@@ -1,9 +1,9 @@
 # 📄 Product Requirements Document (PRD)
 
-## π (Pi) Universal Second Brain - Intelligent Classification System
+## Universal Second Brain - Intelligent Classification System
 
 **Vision:** A domain-agnostic intelligence layer for any AI assistant  
-**Initial Implementation:** Reachy Mini Retail Assistant
+**Initial Implementation:** Retail Assistant
 
 ---
 
@@ -11,14 +11,14 @@
 
 ### Product Name
 
-**π (Pi) Universal Second Brain**  
+**Universal Second Brain**  
 *Intelligent classification and memory system for AI assistants across any domain*
 
-**First Use Case:** Reachy Mini Retail Assistant
+**First Use Case:** Retail Assistant
 
 ### Vision Statement
 
-π transforms unstructured interactions into structured, searchable knowledge using multi-stage classification. Think **Logseq meets RAG meets Zapier** - automatic classification, canonical storage, cross-domain reasoning. 
+The system transforms unstructured interactions into structured, searchable knowledge using multi-stage classification. Think **Logseq meets RAG meets Zapier** - automatic classification, canonical storage, cross-domain reasoning. 
 
 **Not just a retail assistant. Not just a chatbot. A universal intelligence layer.**
 
@@ -107,7 +107,7 @@ Different interfaces for different contexts:
 
 | Domain | Interface | Edge Device |
 |--------|-----------|-------------|
-| **Retail** | Reachy Mini Robot | Pi 5 |
+| **Retail** | Kiosk / Robot / Web | Any edge device |
 | **Personal** | Mobile/Desktop App | Phone/Laptop |
 | **Business** | Slack/Teams Bot | Cloud Server |
 | **Research** | Note-taking Plugin | Local Machine |
@@ -121,7 +121,7 @@ Different interfaces for different contexts:
 * Zero long-term memory writes
 * Specialized UI/UX per domain
 
-### π (Universal Second Brain)
+### Universal Second Brain
 
 **The domain-agnostic intelligence layer that powers all edges**
 
@@ -166,11 +166,11 @@ Different interfaces for different contexts:
    * A/B test classifiers
    * No model retraining needed
 
-> **Edge interfaces speak their domain language. π thinks universally.**
+> **Edge interfaces speak their domain language. The Second Brain thinks universally.**
 
 ### Why This Architecture Matters
 
-| Traditional Approach | π Universal Second Brain |
+| Traditional Approach | Universal Second Brain |
 |---------------------|------------------------|
 | Build separate AI per domain | One intelligence layer, many interfaces |
 | Chat logs with no structure | Canonical knowledge graph |
@@ -188,35 +188,35 @@ Different interfaces for different contexts:
 #### 🛒 Retail: Deal Promotion
 ```
 User: "Hi there!"
-π Classification: Domain=retail, Intent=greeting, Context=start_interaction
+Classification: Domain=retail, Intent=greeting, Context=start_interaction
 Edge: "Hey! We've got 20% off organic milk and buy-one-get-one pasta today. Want to check them out?"
-π Storage: Event(interaction) + links to Product entities
+Storage: Event(interaction) + links to Product entities
 ```
 
 #### 📱 Personal: Create Reminder
 ```
 User: "Remind me to call Sarah tomorrow at 2pm"
-π Classification: Domain=personal, Intent=create_reminder
+Classification: Domain=personal, Intent=create_reminder
   Entities: Sarah(person), tomorrow 2pm(datetime), call(action)
-π Action: Create Task(reminder) + link to Entity(Sarah)
+Action: Create Task(reminder) + link to Entity(Sarah)
 Edge: "Reminder set for tomorrow at 2pm: Call Sarah"
 ```
 
 #### 💼 Business: Support Ticket
 ```
 User: "Customer John complained shipping was late"
-π Classification: Domain=business, Intent=log_support_issue
+Classification: Domain=business, Intent=log_support_issue
   Entities: John(customer), shipping(service), late(sentiment:negative)
-π Action: Create Event(support_ticket) + Entity(John) + Knowledge(shipping_issue)
+Action: Create Event(support_ticket) + Entity(John) + Knowledge(shipping_issue)
 Edge: "Logged as ticket #1234. John's 3rd shipping issue this month. Want me to escalate?"
 ```
 
 #### 🏠 Home: Maintenance Tracking
 ```
 User: "Kitchen light is flickering"
-π Classification: Domain=home, Intent=maintenance_issue
+Classification: Domain=home, Intent=maintenance_issue
   Entities: kitchen(place), light(device), flickering(problem)
-π Action: Create Task(maintenance) + Entity(device) + Event(observation)
+Action: Create Task(maintenance) + Entity(device) + Event(observation)
 Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacement."
 ```
 
@@ -228,7 +228,7 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 3. Explains value briefly (≤35 words)
 4. Offers to show item location
 
-**π Actions:** Log interaction event, track which promos mentioned
+**Actions:** Log interaction event, track which promos mentioned
 
 #### 7.2 Wayfinding Flow
 1. Customer asks for product
@@ -236,14 +236,14 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 3. Points/gestures toward aisle
 4. Gives spoken directions
 
-**π Actions:** Log product query, track navigation success
+**Actions:** Log product query, track navigation success
 
 #### 7.3 Clarification Flow
 * If ambiguity exists, Reachy may ask **one clarifying question**
 * After clarification, Reachy must answer or fallback
 * No endless back-and-forth
 
-**π Actions:** Log ambiguous query for classifier improvement
+**Actions:** Log ambiguous query for classifier improvement
 
 #### 7.4 Selfie Flow (Optional)
 1. Reachy offers a selfie
@@ -251,13 +251,13 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 3. Countdown and capture via external device
 4. No image storage (privacy)
 
-**π Actions:** Log engagement event (no image data)
+**Actions:** Log engagement event (no image data)
 
 ---
 
 ## 8. Functional Requirements
 
-### 8.1 Universal π Requirements
+### 8.1 Universal Second Brain Requirements
 
 **Classification Engine:**
 * Multi-stage classification (Domain → Intent → Entity → Canonical)
@@ -302,7 +302,7 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 
 **Fast LLM Usage (Allowed):**
 * Low-latency LLM calls for nuanced responses
-* Strict prompt contracts with π-provided cache
+* Strict prompt contracts with backend-provided cache
 * Bounded context and output
 * Inference model/provider must be fully configurable by environment or deployment profile
 * No memory writes from edge LLM
@@ -316,18 +316,18 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 **Memory System:**
 * **L1 Working Memory** (RAM, hot, ≤1MB)
 * **L2 Cached Knowledge** (SQLite FTS5 and/or vector index, ≤100MB edge target)
-* **L3 Canonical Memory** (π only, unlimited)
+* **L3 Canonical Memory** (backend only, unlimited)
 
 **External Data Sources:**
 * Price book feeds
 * Promotion feeds
 * Store configuration systems
-* All data must flow through π for classification
+* All data must flow through the Second Brain for classification
 * Normalized and cached for edge consumption
 
 ---
 
-## 9. π (Universal Second Brain) Responsibilities
+## 9. Universal Second Brain Responsibilities
 
 **Event Ingestion:**
 * Receive interaction events from all edge devices (append-only log)
@@ -384,13 +384,13 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 * Spoken responses ≤35 words
 * Cache metadata includes: sku, aisle, promo details
 
-(Full prompt contract maintained as a versioned artifact in π)
+(Full prompt contract maintained as a versioned artifact in the backend)
 
 ---
 
 ## 11. Orchestration Models
 
-### Universal π Architecture
+### Universal Architecture
 
 ```
 ┌──────────────────────────────────────────┐
@@ -399,27 +399,27 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 └──────────┬───────────────────────────────┘
            │
 ┌──────────▼───────────────────────────────┐
-│  π Event Ingestion API                   │
+│  Event Ingestion API                     │
 │  - Interaction events from edge devices  │
 │  - External data feed processing         │
 └──────────┬───────────────────────────────┘
            │
 ┌──────────▼───────────────────────────────┐
-│  π Classification Pipeline               │
+│  Classification Pipeline               │
 │  - Multi-stage classifier                │
 │  - Domain plugins                        │
 │  - Confidence scoring                    │
 └──────────┬───────────────────────────────┘
            │
 ┌──────────▼───────────────────────────────┐
-│  π Canonical Storage                     │
+│  Canonical Storage                     │
 │  - Entities, Events, Knowledge, Tasks    │
 │  - Knowledge Graph                       │
 │  - Temporal tracking                     │
 └──────────┬───────────────────────────────┘
            │
 ┌──────────▼───────────────────────────────┐
-│  π Cache Generation Engine               │
+│  Cache Generation Engine               │
 │  - Domain-filtered snapshots             │
 │  - Incremental sync                      │
 │  - Edge-optimized queries                │
@@ -433,11 +433,11 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 └───────┘    └────────┘  └────────┘  └────────┘
 ```
 
-### Retail Edge (Reachy Mini) Architecture
+### Retail Edge Architecture
 
 ```
 ┌──────────────────────────────────────────┐
-│  Reachy Mini (Pi 5)                      │
+│  Edge Device                             │
 │                                          │
 │  ┌────────────────────────────────────┐ │
 │  │  FSM Controller                    │ │
@@ -474,7 +474,7 @@ Edge: "Added to fix list. Last bulb change was 6 months ago. Might need replacem
 │  └────────┬───────────────────────────┘ │
 │           │                              │
 │  ┌────────▼───────────────────────────┐ │
-│  │  π Client (Event Emitter)         │ │
+│  │  Brain Client (Event Emitter)       │ │
 │  │  - Async event logging            │ │
 │  │  - Cache sync requests            │ │
 │  │  - Telemetry                      │ │
@@ -583,8 +583,8 @@ Debug mode changes **visibility, not behavior**.
 
 **Included:**
 * Retail domain plugin (intents, entities, tools)
-* Edge backend for Pi 5 (FastAPI, L1/L2 cache)
-* π classification system (basic single-domain)
+* Edge backend (FastAPI, L1/L2 cache)
+* Classification system (basic single-domain)
 * Demo UI (Gradio on Hugging Face)
 * Deal promotion, wayfinding, clarification
 * Optional selfie flow
@@ -647,7 +647,7 @@ Debug mode changes **visibility, not behavior**.
 |------|-----------|----------|
 | **Hallucination** | Cache-only prompts, strict contracts | Critical |
 | **Latency** | Fast LLM + L1/L2 caching | Critical |
-| **Classification drift** | π owns canonical memory, replay testing | High |
+| **Classification drift** | Second Brain owns canonical memory, replay testing | High |
 | **Debug difficulty** | Full trace logging, explainability | High |
 | **Domain complexity** | Start with retail, validate architecture first | Medium |
 | **Store data changes** | External feed ingestion, sync protocol | Medium |
@@ -662,8 +662,8 @@ Debug mode changes **visibility, not behavior**.
 ### Phase 1 (Retail MVP)
 
 **Technical:**
-* ✅ Edge backend fully functional on Pi 5
-* ✅ π classification system working for retail domain
+* ✅ Edge backend fully functional
+* ✅ Classification system working for retail domain
 * ✅ Demo UI deployed to Hugging Face Spaces
 * Cache sync protocol implemented
 * Full observability and debugging
@@ -710,9 +710,9 @@ Debug mode changes **visibility, not behavior**.
 
 Traditional AI assistants are **stateless chat interfaces** that forget everything.
 
-π is a **persistent, structured intelligence layer** that learns and reasons.
+The Universal Second Brain is a **persistent, structured intelligence layer** that learns and reasons.
 
-| Traditional AI Assistant | π Universal Second Brain |
+| Traditional AI Assistant | Universal Second Brain |
 |------------------------|------------------------|
 | Chat logs | Structured knowledge graph |
 | No memory between sessions | Persistent canonical storage |
@@ -729,7 +729,7 @@ Traditional AI assistants are **stateless chat interfaces** that forget everythi
 * **For Users:** AI that remembers, learns, and helps across all contexts (work, home, shopping, research)
 * **For Developers:** A universal intelligence layer they can plug into any application
 * **For Businesses:** Deploy domain-specific AI without building from scratch
-* **For Robotics:** Reachy Mini is just the first interface; the brain scales infinitely
+* **For Robotics/Kiosks:** The retail interface is just the first; the brain scales to any form factor
 
 ---
 

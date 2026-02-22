@@ -1,4 +1,4 @@
-# System-Level Test Design - π Universal Second Brain
+﻿# System-Level Test Design - Universal Second Brain
 
 **Project:** reachy-mini-retail-assistant  
 **Assessment Date:** 2026-01-10  
@@ -11,7 +11,7 @@
 
 **Overall Testability Assessment:** ✅ **PASS with Recommendations**
 
-The architecture demonstrates strong testability fundamentals with clear separation of concerns, mockable boundaries, and comprehensive NFR requirements. The second brain design (Edge + π) enables independent testing of each layer. Minor recommendations focus on enhancing observability and test data management.
+The architecture demonstrates strong testability fundamentals with clear separation of concerns, mockable boundaries, and comprehensive NFR requirements. The second brain design (Edge + Backend) enables independent testing of each layer. Minor recommendations focus on enhancing observability and test data management.
 
 **Gate Check Recommendation:** ✅ **PROCEED** to implementation-readiness
 
@@ -22,16 +22,16 @@ The architecture demonstrates strong testability fundamentals with clear separat
 ### 1. Controllability: ✅ PASS
 
 **Strengths:**
-- **Clean Architecture:** Edge and π layers are independently controllable
+- **Clean Architecture:** Edge and Backend layers are independently controllable
 - **REST API Boundaries:** All interactions via HTTP/JSON enable easy test doubles
 - **Domain Plugins:** YAML-based configurations allow test-specific domains without code changes
-- **Database Isolation:** SQLite (edge) and PostgreSQL (π) support in-memory/ephemeral instances
+- **Database Isolation:** SQLite (edge) and PostgreSQL (Backend) support in-memory/ephemeral instances
 - **Cache Layering:** L1 (memory) and L2 (SQLite) caches independently testable
 - **Event-Driven:** Async event emission allows test-time event injection
 
 **Testable State Control:**
 - Edge cache pre-seeding via direct SQLite inserts
-- π canonical storage seeding via API or direct DB
+- backend canonical storage seeding via API or direct DB
 - LLM mocking via dependency injection (OpenAI client configurable)
 - Session state control via test fixtures
 - Time mocking for TTL/expiry testing (cache, sessions, promos)
@@ -86,7 +86,7 @@ assert classification['intent_confidence'] >= 0.90  # NFR16
 
 **Recommendations:**
 1. **Test Logging Mode:** Add DEBUG mode that logs cache slices, LLM prompts, classifier decisions
-2. **Trace Correlation:** Ensure trace_id propagates Edge → π for end-to-end test tracing
+2. **Trace Correlation:** Ensure trace_id propagates Edge → the backend for end-to-end test tracing
 3. **Synthetic Monitoring:** Add canary endpoints for continuous production testing
 
 ---
@@ -94,10 +94,10 @@ assert classification['intent_confidence'] >= 0.90  # NFR16
 ### 3. Reliability: ✅ PASS
 
 **Strengths:**
-- **Stateless Services:** Edge and π services are stateless, enabling parallel test execution
+- **Stateless Services:** Edge and Backend services are stateless, enabling parallel test execution
 - **Idempotent APIs:** Event ingestion with deduplication allows test retry
 - **Database Transactions:** Atomic operations prevent partial state in tests
-- **Test Isolation:** SQLite in-memory (edge) and ephemeral PostgreSQL (π) for test isolation
+- **Test Isolation:** SQLite in-memory (edge) and ephemeral PostgreSQL (Backend) for test isolation
 - **Retry Logic:** Exponential backoff on failures testable with fault injection
 - **Graceful Degradation:** LLM fallback to templates testable by mocking failures
 
@@ -206,7 +206,7 @@ def test_l1_cache_eviction_lru():
 
 **Scope:**
 - API endpoints with real databases (SQLite, PostgreSQL in-memory)
-- Edge → π event emission and ingestion
+- Edge → the backend event emission and ingestion
 - Cache generation and sync protocol
 - Classification pipeline with all 5 stages
 - Multi-tenant data isolation
@@ -241,20 +241,20 @@ async def test_interact_endpoint_cache_hierarchy(test_client, seeded_db):
 **Scope:**
 - Complete user flows (greeting → wayfinding → farewell)
 - Voice input → LLM → gesture coordination
-- Edge cache sync → event emission → π ingestion
+- Edge cache sync → event emission → the backend ingestion
 - Multi-stage classification → canonical storage → knowledge graph
 - Deal promotion flow (proactive engagement)
 - Clarification flow (ambiguous query handling)
 
 **Tools:**
-- Playwright (if web UI exists for π demo)
+- Playwright (if web UI exists for the backend demo)
 - Custom test harness for Reachy robot (mocked hardware)
 - `pytest` with scenario-based fixtures
 
 **Example E2E Test:**
 ```python
 @pytest.mark.e2e
-async def test_wayfinding_flow_with_gesture(edge_client, pi_client):
+async def test_wayfinding_flow_with_gesture(edge_client, brain_client):
     """FR28: Complete wayfinding flow from query to gesture"""
     # 1. Customer query via edge
     response = await edge_client.post(
@@ -266,11 +266,11 @@ async def test_wayfinding_flow_with_gesture(edge_client, pi_client):
     assert "Aisle 3" in response.json()["response"]
     assert response.json()["gesture_action"] == "point_left"
     
-    # 3. Verify event emitted to π (async)
+    # 3. Verify event emitted to the backend (async)
     await asyncio.sleep(1)  # Wait for event emission
-    events = await pi_client.get("/events?session_id=test-session-1")
+    events = await brain_client.get("/events?session_id=test-session-1")
     
-    # 4. Verify π classification
+    # 4. Verify classification
     assert events[0]["domain"] == "retail"
     assert events[0]["intent"] == "product_location"
     assert events[0]["entities"][0]["value"] == "organic apples"
@@ -324,7 +324,7 @@ def test_sql_injection_prevention():
 | NFR2 | Fast path <500ms | Benchmark | pytest-benchmark | Cache-only queries |
 | NFR3 | L1 hit <10ms | Unit | pytest | Mocked cache timing |
 | NFR4 | L2 query <100ms | Integration | pytest | SQLite FTS5 timing |
-| NFR5 | π class <200ms | Integration | pytest | Cached pattern timing |
+| NFR5 | classification <200ms | Integration | pytest | Cached pattern timing |
 | NFR6 | Sync <5s | Integration | pytest | Full sync cycle |
 | NFR7 | Graph query <100ms | Unit | pytest | Relationship queries |
 | NFR8 | Cached pattern <100ms | Integration | pytest | Classification cache hit |
@@ -373,7 +373,7 @@ export default function() {
 | NFR11 | Zero data corruption | Transaction rollback tests, DB integrity | SQLite PRAGMA checks |
 | NFR12 | ≥99.5% uptime | Health check monitoring, recovery tests | Synthetic monitoring |
 | NFR13 | Graceful degradation | Network failure scenarios | pytest with mocked failures |
-| NFR14 | Offline cache usage | Disconnect π, verify edge works | Integration test |
+| NFR14 | Offline cache usage | Disconnect backend, verify edge works | Integration test |
 | NFR38 | No silent failures | Log inspection, exception propagation | All exceptions logged + raised |
 
 **Chaos Testing Example:**
@@ -462,8 +462,8 @@ def test_graceful_degradation_llm_failure(edge_client, mock_llm_down):
 ### Staging Environment
 
 **Infrastructure:**
-- Edge: Raspberry Pi 5 (4GB RAM) OR equivalent VM
-- π Backend: Cloud VM (2 vCPU, 4GB RAM minimum)
+- Edge: edge server (4GB RAM) OR equivalent VM
+- Backend: Cloud VM (2 vCPU, 4GB RAM minimum)
 - PostgreSQL: Managed instance (AWS RDS, Supabase, etc.)
 - Monitoring: Prometheus + Grafana
 
@@ -565,7 +565,7 @@ Architecture is testable without significant refactoring. All concerns are addre
 **Actions:**
 - [ ] Install k6 in CI/staging
 - [ ] Create `load-test-edge.js` script (100 concurrent users)
-- [ ] Create `load-test-pi.js` script (1000 events/min ingestion)
+- [ ] Create `load-test-backend.js` script (1000 events/min ingestion)
 - [ ] Set up Prometheus scraping in staging
 - [ ] Create Grafana dashboard for load test visualization
 
@@ -591,8 +591,8 @@ Architecture is testable without significant refactoring. All concerns are addre
 |------|------|-------------|-----|--------------|
 | Epic 1 (Core Edge) | 15 hrs | 5 hrs | 3 hrs | 23 hrs (NFR39 compliance) |
 | Epic 2 (Human Interface) | 35 hrs | 15 hrs | 10 hrs | 60 hrs (NFR39 compliance) |
-| Epic 3 (π Intelligence) | 50 hrs | 20 hrs | 10 hrs | 80 hrs (NFR39 compliance) |
-| Epic 4 (Edge-π Sync) | 20 hrs | 10 hrs | 5 hrs | 35 hrs (NFR39 compliance) |
+| Epic 3 (Intelligence) | 50 hrs | 20 hrs | 10 hrs | 80 hrs (NFR39 compliance) |
+| Epic 4 (Edge-Brain Sync) | 20 hrs | 10 hrs | 5 hrs | 35 hrs (NFR39 compliance) |
 | Epic 5 (Prod Readiness) | Already included in Epic 1-4 | - | - | - |
 
 **Note:** Epic 5 stories (5.1-5.10) distribute testing effort across Epic 1-4 implementation. The totals above already include ≥80% coverage requirements from NFR39.
@@ -604,7 +604,7 @@ Architecture is testable without significant refactoring. All concerns are addre
 **Testability Grade:** ✅ **A** (Excellent)
 
 **Key Strengths:**
-- Clean separation of concerns (Edge, π, Storage)
+- Clean separation of concerns (Edge, the backend, Storage)
 - REST API boundaries enable easy mocking
 - Comprehensive observability (logs, metrics, traces)
 - Event replay system built-in for regression testing

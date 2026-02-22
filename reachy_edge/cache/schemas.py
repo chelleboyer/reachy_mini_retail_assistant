@@ -26,7 +26,7 @@ class Promo(BaseModel):
 
 
 class CacheSyncPayload(BaseModel):
-    """Payload for cache sync from π."""
+    """Payload for cache sync from the Second Brain."""
     version: str
     timestamp: datetime
     products: Optional[List[Product]] = None

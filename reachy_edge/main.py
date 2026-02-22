@@ -1,4 +1,4 @@
-"""FastAPI main application for Reachy Edge Backend."""
+"""FastAPI main application for Edge Backend."""
 from __future__ import annotations
 
 import asyncio
@@ -9,12 +9,14 @@ from datetime import datetime, timezone
 from typing import Any
 
 import structlog
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from .config import settings
 from .cache import L1Cache, L2Cache, CacheSyncPayload
-from .pi_client import EventEmitter
+from .fsm import InteractionStateMachine
+from .brain_client import EventEmitter
 from .tools import (
     ToolDependencies,
     ProductLookupTool,
@@ -24,6 +26,9 @@ from .tools import (
 )
 from .llm import PromptManager, LLMInference
 from .models import HealthResponse, InteractionRequest, InteractionResponse
+from .mind import mind_bus, MindEvent, EVENT_REQUEST, EVENT_RESPONSE, EVENT_ERROR
+from .mind.routes import router as mind_router
+from .api.routes import router as api_router
 
 structlog.configure(
     processors=[
@@ -61,8 +66,29 @@ async def lifespan(app: FastAPI):
         "movement": MovementTool(),
     }
 
+    # Auto-load sample products so the API works out of the box
+    from .data.sample_products import get_sample_products
+    from .cache.schemas import Product as CacheProduct
+    sample = get_sample_products()
+    cache_products = [
+        CacheProduct(
+            sku=p.sku, name=p.name,
+            aisle=app.state.l2_cache._extract_aisle(p.location),
+            category=p.category, price=p.price, description=p.description,
+        )
+        for p in sample
+    ]
+    await app.state.l2_cache.update_products(cache_products)
+    logger.info("sample_products_loaded", count=len(sample))
+
     await app.state.l2_cache.preload_hot_data(app.state.l1_cache)
     asyncio.create_task(app.state.event_emitter.worker())
+
+    app.state._start_time = time.time()
+    mind_bus.publish_sync(MindEvent(type="startup", data={
+        "reachy_id": settings.reachy_id,
+        "store_id": settings.store_id,
+    }))
 
     logger.info(
         "reachy_edge_ready",
@@ -76,13 +102,14 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("shutting_down_reachy_edge")
+    mind_bus.publish_sync(MindEvent(type="shutdown", data={}))
     app.state.event_emitter.stop()
     await app.state.event_emitter.flush()
 
 
 app = FastAPI(
-    title="Reachy Edge Backend",
-    description="Fast, scalable Pi 5 backend for Reachy Mini retail assistant",
+    title="Edge Backend",
+    description="Fast, scalable edge backend for retail assistant",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -94,6 +121,49 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ---------------------------------------------------------------------------
+# Mind Monitor middleware — publishes request/response events on every call
+# ---------------------------------------------------------------------------
+
+class MindMiddleware(BaseHTTPMiddleware):
+    """Publish request/response events to the Mind Monitor event bus."""
+
+    async def dispatch(self, request: Request, call_next):
+        # Skip SSE / static mind endpoints to avoid noise
+        if request.url.path.startswith("/mind"):
+            return await call_next(request)
+
+        start = time.time()
+        mind_bus.publish_sync(MindEvent(
+            type=EVENT_REQUEST,
+            data={"method": request.method, "path": request.url.path,
+                  "query": dict(request.query_params)},
+        ))
+
+        try:
+            response: Response = await call_next(request)
+            latency_ms = (time.time() - start) * 1000
+            mind_bus.publish_sync(MindEvent(
+                type=EVENT_RESPONSE,
+                data={"path": request.url.path, "status": response.status_code,
+                      "latency_ms": round(latency_ms, 2)},
+            ))
+            return response
+        except Exception as exc:
+            latency_ms = (time.time() - start) * 1000
+            mind_bus.publish_sync(MindEvent(
+                type=EVENT_ERROR,
+                data={"path": request.url.path, "error": str(exc),
+                      "latency_ms": round(latency_ms, 2)},
+            ))
+            raise
+
+
+app.add_middleware(MindMiddleware)
+app.include_router(mind_router)
+app.include_router(api_router)
 
 
 def _get_tool_deps() -> ToolDependencies:
@@ -169,6 +239,10 @@ async def interact(request: InteractionRequest) -> InteractionResponse:
 
         fsm.responding()
         if not result.success:
+            mind_bus.publish_sync(MindEvent(
+                type="cache_miss",
+                data={"query": request.query, "intent": intent, "tool": tool_name},
+            ))
             return InteractionResponse(
                 response=result.data.get("response", "I couldn't find that right now."),
                 intent=intent,
@@ -179,6 +253,18 @@ async def interact(request: InteractionRequest) -> InteractionResponse:
             )
 
         cache_hit = bool((result.data or {}).get("cache_hit", False))
+        result_count = (result.data or {}).get("result_count", 0)
+        mind_bus.publish_sync(MindEvent(
+            type="cache_hit" if cache_hit else "search",
+            data={
+                "query": request.query,
+                "intent": intent,
+                "tool": tool_name,
+                "result_count": result_count,
+                "tier": "L1" if cache_hit else "L2",
+                "latency_ms": round(latency_ms, 2),
+            },
+        ))
         metadata = {
             "state": fsm.state.value,
             "products": (result.data or {}).get("products", []),
@@ -203,7 +289,7 @@ async def interact(request: InteractionRequest) -> InteractionResponse:
 @app.post("/cache/sync")
 @app.post("/cache/apply")
 async def apply_cache(payload: CacheSyncPayload) -> dict[str, Any]:
-    """Receive cache updates from π and apply them to local caches."""
+    """Receive cache updates from the Second Brain and apply them to local caches."""
     try:
         if payload.products:
             await app.state.l2_cache.update_products(payload.products)
